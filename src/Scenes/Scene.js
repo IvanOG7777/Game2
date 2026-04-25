@@ -6,6 +6,9 @@ class GalleryShooter extends Phaser.Scene {
 
         this.my = {sprite: {}};
 
+        this.my.sprite.bullet = [];
+        this.maxBullets = 5;
+
         this.currentWave = 1;
         this.enemies = [];
         this.boss = null;
@@ -42,11 +45,9 @@ class GalleryShooter extends Phaser.Scene {
         let cockpit = my.sprite.spaceShip = this.add.sprite(this.cockpitX, this.cockpitY, "spaceParts", "cockpitRed_4.png");
         let rightWing = my.sprite.rightWing = this.add.sprite(this.wingRightX, this.wingRightY, "spaceParts", "wingRed_4.png");
         let leftWing = my.sprite.leftWing = this.add.sprite(this.wingLeftX, this.wingLeftY, "spaceParts", "wingRed_4.png");
-        let playerShot = my.sprite.PlayerShot = this.add.sprite(this.cockpitX, this.cockpitY, "spaceParts", "laserRed01.png");
 
         // Assets changes
-        rightWing.flipX = true
-        playerShot.visible = false;
+        rightWing.flipX = true;
         rightWing.angle = 180;
         leftWing.angle = -180
 
@@ -58,14 +59,6 @@ class GalleryShooter extends Phaser.Scene {
         this.moveRightArrow = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.RIGHT);
         this.shoot = this.input.keyboard.addKey('space');
 
-        // Event handler for shooting
-        this.shoot.on('down', ()=> {
-            if (!playerShot.visible) {
-            playerShot.visible = true;
-            playerShot.x = cockpit.x;
-            playerShot.y = cockpit.y;
-            }
-        });
     }
 
     update(time, deltaTime) {
@@ -75,15 +68,14 @@ class GalleryShooter extends Phaser.Scene {
         let cockpit = my.sprite.spaceShip;
         let leftWing = my.sprite.leftWing;
         let rightWing = my.sprite.rightWing;
-        let playerShot = my.sprite.PlayerShot;
 
         // make ship part array
         let shipParts = [cockpit, leftWing, rightWing];
 
         let speed = 475; // Movement speed in pixels
-        let seconds = deltaTime / 1000; // turning DT (in ms) into seconds
+        let dt = deltaTime / 1000; // turning DT (in ms) into seconds
 
-        let moveAmount = speed * seconds; // appropriate movement speed using delta time
+        let moveAmount = speed * dt; // appropriate movement speed using delta time
 
         // Polling for left movement
         if (this.moveLeft.isDown || this.moveLeftArrow.isDown) {
@@ -99,14 +91,19 @@ class GalleryShooter extends Phaser.Scene {
             }
         }
 
-        // Polling checker to see if shot is still in bounds
-        if (playerShot.visible == true) {
-            console.log("Shot y:", playerShot.y);
-            playerShot.y -= moveAmount; // move position while still visible
-            if (playerShot.y <= 0) { // if shot hits 0 or goes below it
-                playerShot.visible = false; // reset the visibility
+        if (Phaser.Input.Keyboard.JustDown(this.shoot)) {
+            if (my.sprite.bullet.length < this.maxBullets) {
+                my.sprite.bullet.push(this.add.sprite(
+                    my.sprite.spaceShip.x, my.sprite.spaceShip.y-(my.sprite.spaceShip.displayHeight/2), "spaceParts", "laserRed01.png")
+                );
             }
         }
+
+        for (let bullet of my.sprite.bullet) {
+            bullet.y -= moveAmount;
+        }
+
+        my.sprite.bullet = my.sprite.bullet.filter((bullet) => bullet.y > -(bullet.displayHeight/2));
 
     }
 }
