@@ -1,10 +1,14 @@
-class OneD extends Phaser.Scene {
+class GalleryShooter extends Phaser.Scene {
 
     constructor() {
         super("Main Scene")
         console.log("Constructor");
 
         this.my = {sprite: {}};
+
+        this.currentWave = 1;
+        this.enemies = [];
+        this.boss = null;
 
         // init position
         this.cockpitX = 350;

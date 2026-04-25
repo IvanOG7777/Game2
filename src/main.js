@@ -9,7 +9,7 @@ let config = {
     },
     width: 700,
     height: 1000,
-    scene: [OneD]
+    scene: [GalleryShooter]
 }
 
 let my = {sprite:{}};
