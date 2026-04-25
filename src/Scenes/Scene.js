@@ -8,6 +8,7 @@ class GalleryShooter extends Phaser.Scene {
 
         this.my.sprite.bullet = [];
         this.maxBullets = 5;
+        this.playerScore = 0;
 
         this.currentWave = 1;
         this.enemies = [];
@@ -30,10 +31,17 @@ class GalleryShooter extends Phaser.Scene {
     preload() {
         console.log("Preloading assets and images");
         this.load.setPath("./assets/"); // loading assets
-        console.log("Set the path for images to ./assets");
 
         this.load.atlasXML("spaceParts", "sheet.png", "sheet.xml"); // loading xml sheets
-        console.log("Loaded atlas from XML");
+
+        // loaduing necessary audios
+        this.load.audio("laser", "laser5");
+        this.load.audio("death1", "spaceTrash4");
+        this.load.audio("death2", "explosionCrunch_000");
+        this.load.audio("engine1", "spaceEngineLow_002");
+        this.load.audio("engine2", "spaceEngineSmall_001");
+
+        this.load.bitmapFont("rocketSquare", "KennyRocketSquare_0.png", "KennyRocketSquare.fnt");
     }
 
     create() {
