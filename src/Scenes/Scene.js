@@ -1,10 +1,13 @@
 class GalleryShooter extends Phaser.Scene {
 
+    graphics;
+    curve;
+    path;
     constructor() {
         super("Main Scene")
         console.log("Constructor");
 
-        this.my = {sprite: {}};
+        this.my = {sprite: {}, text: {}};
 
         this.my.sprite.bullet = [];
         this.maxBullets = 5;
@@ -29,23 +32,24 @@ class GalleryShooter extends Phaser.Scene {
     }
 
     preload() {
-        console.log("Preloading assets and images");
         this.load.setPath("./assets/"); // loading assets
 
         this.load.atlasXML("spaceParts", "sheet.png", "sheet.xml"); // loading xml sheets
+        this.load.image("x-mark", "numeralX.png");             // x marks the spot
+        this.load.image("enemyShip", "enemyGreen1.png");       // spaceship that runs along the path
 
-        // loaduing necessary audios
-        this.load.audio("laser", "laser5");
-        this.load.audio("death1", "spaceTrash4");
-        this.load.audio("death2", "explosionCrunch_000");
-        this.load.audio("engine1", "spaceEngineLow_002");
-        this.load.audio("engine2", "spaceEngineSmall_001");
+        // loading necessary audios
+        this.load.audio("laser", "laser5.ogg");
+        this.load.audio("death1", "spaceTrash4.ogg");
+        this.load.audio("death2", "explosionCrunch_000.ogg");
+        this.load.audio("engine1", "spaceEngineLow_002.ogg");
+        this.load.audio("engine2", "spaceEngineSmall_001.ogg");
 
+        // loading score font
         this.load.bitmapFont("rocketSquare", "KennyRocketSquare_0.png", "KennyRocketSquare.fnt");
     }
 
     create() {
-        console.log("Create function")
 
         let my = this.my;
 
@@ -66,7 +70,61 @@ class GalleryShooter extends Phaser.Scene {
         this.moveRight = this.input.keyboard.addKey('D');
         this.moveRightArrow = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.RIGHT);
         this.shoot = this.input.keyboard.addKey('space');
+        this.rKey = this.input.keyboard.addKey('R');
 
+        my.text.score = this.add.bitmapText(515, 10,  "rocketSquare", "Score " + this.playerScore);
+
+        this.points = [
+            20, 20,
+            80, 400,
+            300, 750
+        ];
+        this.curve = new Phaser.Curves.Spline(this.points);
+        this.graphics = this.add.graphics();
+
+        this.xImages = [];
+        this.drawPoints();
+        this.drawLine();
+
+        this.mouseDown = this.input.on('pointerdown', (pointer) => {
+            this.addPoint({x: pointer.x, y: pointer.y});
+            this.drawLine();
+        });
+
+        this.isRunning = false;
+
+        my.sprite.enemyShip = this.add.follower(this.curve, 10, 10, "enemyShip");
+        my.sprite.enemyShip.visible = false;
+
+    }
+
+    drawPoints() {
+        for (let point of this.curve.points) {
+            this.xImages.push(this.add.image(point.x, point.y, "x-mark"));
+        }
+    }
+
+    clearPoints() {
+        this.curve.points = [];
+        this.graphics.clear();
+        for (let img of this.xImages) {
+            img.destroy();
+        }
+    }
+
+    addPoint(point) {
+        this.curve.addPoint(point);
+        this.xImages.push(this.add.image(point.x, point.y, "x-mark"));
+    }
+
+    // Draws the spline
+    drawLine() {
+        this.graphics.clear();
+        this.graphics.lineStyle(2, 0xffffff, 1);
+        let amountOfPoints = this.curve.points.length;
+        let curveSmoothness = amountOfPoints * 50;
+        console.log(curveSmoothness);
+        this.curve.draw(this.graphics, curveSmoothness);
     }
 
     update(time, deltaTime) {
@@ -104,6 +162,7 @@ class GalleryShooter extends Phaser.Scene {
                 my.sprite.bullet.push(this.add.sprite(
                     my.sprite.spaceShip.x, my.sprite.spaceShip.y-(my.sprite.spaceShip.displayHeight/2), "spaceParts", "laserRed01.png")
                 );
+                this.sound.play("laser");   
             }
         }
 
@@ -112,6 +171,33 @@ class GalleryShooter extends Phaser.Scene {
         }
 
         my.sprite.bullet = my.sprite.bullet.filter((bullet) => bullet.y > -(bullet.displayHeight/2));
+
+        if (Phaser.Input.Keyboard.JustDown(this.rKey)) {
+            console.log("Run mode");
+            if (this.isRunning == true) {
+                my.sprite.enemyShip.stopFollow();
+                my.sprite.enemyShip.visible = false;
+                this.isRunning = false;
+            } else {
+                if (this.curve.points.length > 0) {
+                    this.isRunning = true;
+                    my.sprite.enemyShip.visible = true;
+                    my.sprite.enemyShip.x = this.curve.points[0].x;
+                    my.sprite.enemyShip.y = this.curve.points[0].y;
+                    my.sprite.enemyShip.startFollow({
+                        from: 0,
+                        to: 1,
+                        delay: 0,
+                        duration: 2000,
+                        ease: 'Sine.easeInOut',
+                        repeat: -1,
+                        yoyo: true,
+                        rotateToPath: true,
+                        rotationOffset: -90
+                    });
+            }
+        }
+    }
 
     }
 }
