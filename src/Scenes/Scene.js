@@ -75,9 +75,7 @@ class GalleryShooter extends Phaser.Scene {
         my.text.score = this.add.bitmapText(515, 10,  "rocketSquare", "Score " + this.playerScore);
 
         this.points = [
-            20, 20,
-            80, 400,
-            300, 750
+            0, 0,
         ];
         this.curve = new Phaser.Curves.Spline(this.points);
         this.graphics = this.add.graphics();
