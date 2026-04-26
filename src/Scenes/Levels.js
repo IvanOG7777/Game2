@@ -5,52 +5,69 @@ const levels = [
         rows: 3,
         cols: 5,
         enemyType: "basic",
-        movement: "groupDown"
+        movement: "groupDown",
+        startX: 100,
+        startY: -240,
+        speedBoostScore: 200 
     },
     {
         wave: 2,
-        scoreNeeded: 300,
+        scoreNeeded: 325,
         rows: 5,
         cols: 5,
         enemyType: "basic",
-        movement: "groupDown"
+        movement: "groupDown",
+        startX: 100,
+        startY: -450,
+        speedBoostScore: 520 
     },
     {
         wave: 3,
-        scoreNeeded: 500,
+        scoreNeeded: 800,
         enemyCount: 30,
-        rows: 5,
-        cols: 6,
+        rows: 6,
+        cols: 5,
         enemyType: "basic",
-        movement: "groupDown"
+        movement: "groupDown",
+        startX: 100,
+        startY: -550,
+        speedBoostScore: 1000 
     },
     {
         wave: 4,
-        scoreNeeded: 700,
+        scoreNeeded: 1100,
         enemyCount: 15,
         enemyType: "path",
-        movement: "zigzag"
+        movement: "zigzagANDGroup",
+        rows: 6,
+        cols: 5,
+        startX: 100,
+        startY: -550,
     },
     {
         wave: 5,
-        scoreNeeded: 900,
+        scoreNeeded: 1500,
         enemyCount: 20,
         enemyType: "path",
-        movement: "zagzig"
+        movement: "zagzigANDGroup",
+        rows: 6,
+        cols: 5,
+        startX: 100,
+        startY: -550,
     },
     {
         wave: 6,
-        scoreNeeded: 1100,
+        scoreNeeded: 2000,
         enemyCount: 45, // 20 path and 25 basic
         enemyType: "mix",
-        movement: "groupDownZigzag"
+        movement: "groupDownZigzag",
     },
     {
         wave: 7,
-        scoreNeeded: 1300,
+        scoreNeeded: 2600,
         enemyCount: 51,
         enemyType: "mixBoss", // 25 path 25 basic 1 mothership
-        movement: "boss"
+        movement: "boss",
     }
 ];
 

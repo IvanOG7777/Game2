@@ -18,6 +18,13 @@ class GalleryShooter extends Phaser.Scene {
 
         this.currentWave = 1;
         this.enemies = [];
+        this.enemySize;
+        this.pathEnemiesSpawned = 0;
+        this.pathSpawnDelay = 1000;
+        this.pathTimer = 0;
+        this.pathSpawnLimit;
+        this.pathToUse;
+        this.speedUp = false;
         this.boss = null;
 
         // init ship position
@@ -110,7 +117,7 @@ class GalleryShooter extends Phaser.Scene {
 
         this.isRunning = false;
 
-        this.startWave(3);
+        this.startWave(1);
 
         this.anims.create({
             key: "puff",
@@ -156,19 +163,13 @@ class GalleryShooter extends Phaser.Scene {
         this.curve.draw(this.graphics, curveSmoothness);
     }
 
-    spawnEnemies(movement, passedRows, passedCols) {
+    spawnEnemies(movement, passedRows, passedCols, passedStartX, passedStartY) {
         let ROWS = passedRows;
         let COLS = passedCols;
-        let startX = 100;
-        let startY = -240;
+        let startX = passedStartX;
+        let startY = passedStartY;
         let spacingX = 120;
         let spacingY = 100;
-
-        for (let enemy of this.enemies) {
-            enemy.destroy();
-        }
-
-        this.enemies = [];
 
         for (let row = 0; row < ROWS; row++) {
             for (let col = 0; col < COLS; col++) {
@@ -181,7 +182,7 @@ class GalleryShooter extends Phaser.Scene {
                 this.enemies.push(ship);
             }
         }
-}
+    }
 
     startWave(waveNumber) {
         if (waveNumber > levels.length) {
@@ -196,21 +197,55 @@ class GalleryShooter extends Phaser.Scene {
 
         let level = levels[this.currentWave - 1];
 
-        for (let enemy of this.enemies) {
-            enemy.destroy();
-        }
-
         for (let bullet of this.my.sprite.bullet) {
             bullet.destroy();
         }
 
         this.my.sprite.bullet = [];
-        this.enemies = [];
 
         this.enemyDirection = 1;
 
         if(level.movement == "groupDown") {
-            this.spawnEnemies(level.movement, level.rows, level.cols);
+            this.spawnEnemies(level.movement, level.rows, level.cols, level.startX, level.startY);
+        }
+
+        if (level.movement == "zigzag" || level.movement == "zagzig") {
+            this.pathEnemiesSpawned = 0;
+            this.pathSpawnLimit = level.enemyCount;
+            this.pathSpawnDelay = 1000;
+            this.pathTimer = 0;
+
+            this.points = paths[level.movement];
+            this.curve = new Phaser.Curves.Spline(this.points);
+        }
+
+        if (level.movement == "zigzagANDGroup" || level.movement == "zagzigANDGroup") {
+            this.spawnEnemies(level.movement, level.rows, level.cols, level.startX, level.startY);
+
+            this.pathEnemiesSpawned = 0;
+            this.pathSpawnLimit = level.enemyCount;
+            this.pathSpawnDelay = 1000;
+            this.pathTimer = 0;
+            
+            this.points = paths[level.movement];
+            this.curve = new Phaser.Curves.Spline(this.points);
+        }
+
+        this.enemySize = this.enemies.length;
+    }
+
+    checkWave() {
+        let nextWave = this.currentWave + 1; // get enxt wave
+
+        if (nextWave > levels.length) { // check if greater then level count
+            return;
+        }
+
+        let nextLevel = levels[nextWave - 1]; // get next level
+
+        if (this. playerScore >= nextLevel.scoreNeeded) { // check player score
+            this.startWave(nextWave); // add next level
+            console.log("Starting next wave");
         }
     }
 
@@ -219,28 +254,62 @@ class GalleryShooter extends Phaser.Scene {
         let dt = deltaTime / 1000;
         let moveAmount = this.enemySpeed * dt;
         let touchedEdge = false;
+        let level = levels[this.currentWave - 1];
+        let levelScore = level.speedBoostScore;
 
-        for (let enemy of this.enemies) {
+        if (this.speedUp == false) {
+            if (this.playerScore >= levelScore) {
+                this.enemySpeed *= 2;
+                this.speedUp = true;
+            }
+        }
+
+        for (let enemy of this.enemies) { // loop though all enemies
             enemy.x += moveAmount * this.enemyDirection;
 
-            if (enemy.x - enemy.displayWidth / 2 <= 0) { //moveing left
-                touchedEdge = true;
+            if (enemy.x - enemy.displayWidth / 2 <= 0) { // If one enemy touches left wall
+                touchedEdge = true; // set to true
             }
 
-            if (enemy.x + enemy.displayWidth / 2 >= this.game.config.width) {
-                touchedEdge = true;
+            if (enemy.x + enemy.displayWidth / 2 >= this.game.config.width) { // if one enemy touches right wall
+                touchedEdge = true; // set to true
             }
 
         }
 
-        if (touchedEdge == true) {
-            for (let enemy of this.enemies) {
+        if (touchedEdge == true) {// if true
+            for (let enemy of this.enemies) { // move each enemy down along the y axis
                 enemy.y += this.enemyDropAmount;
             }
-            this.enemyDirection *= -1;
+            this.enemyDirection *= -1; // change the direction, -1 left, 1 right
         }
         console.log(destoryCount);
     }
+
+    updatePathEnemies(deltaTime) {
+        this.pathTimer += deltaTime;
+
+        if (this.pathEnemiesSpawned < this.pathSpawnLimit && this.pathTimer >= this.pathSpawnDelay) {
+            let enemy = this.add.follower(this.curve, 10, 10, "enemyShip");
+            enemy.visible = true;
+            enemy.x = this.curve.points[0].x;
+            enemy.y = this.curve.points[0].y;
+            enemy.startFollow({
+            from: 0,
+            to: 1,
+            delay: 0,
+            duration: 3500,
+            ease: 'Sine.easeInOut',
+            repeat: -1,
+            yoyo: true,
+            rotateToPath: true,
+            rotationOffset: -90
+        });
+        this.enemies.push(enemy);
+        this.pathEnemiesSpawned++;
+        this.pathTimer = 0;
+    }
+}
 
     update(time, deltaTime) {
         if (this.playerAlive == true) {
@@ -273,15 +342,17 @@ class GalleryShooter extends Phaser.Scene {
             }
         }
 
+        // Space input to shoot 
         if (Phaser.Input.Keyboard.JustDown(this.shoot)) {
-            if (my.sprite.bullet.length < this.maxBullets) {
+            if (my.sprite.bullet.length < this.maxBullets) { // if the length of bullets is less than maxSize
                 my.sprite.bullet.push(this.add.sprite(
-                    my.sprite.spaceShip.x, my.sprite.spaceShip.y-(my.sprite.spaceShip.displayHeight/2), "spaceParts", "laserRed01.png")
+                    my.sprite.spaceShip.x, my.sprite.spaceShip.y-(my.sprite.spaceShip.displayHeight/2), "spaceParts", "laserRed01.png") // push new bullet to array and add sprite
                 );
                 this.sound.play("laser");   
             }
         }
 
+        // move bullet along y axis
         for (let bullet of my.sprite.bullet) {
             bullet.y -= moveAmount;
         }
@@ -314,11 +385,26 @@ class GalleryShooter extends Phaser.Scene {
                 }
             }
         }
-        this.updateBasicEnemies(deltaTime);
 
-        for (let bullet of my.sprite.bullet) {
-            for(let enemy of this.enemies) {
-                if (this.collides(enemy, bullet)) {
+        let level = levels[this.currentWave - 1];
+        if (level.movement == "groupDown") {
+            // update the position of enemies
+            this.updateBasicEnemies(deltaTime);
+        }
+
+        if (level.movement == "zigzag" || level.movement == "zagzig") {
+            this.updatePathEnemies(deltaTime);
+        }
+
+        if (level.movement == "zigzagANDGroup" || level.movement == "zagzigANDGroup") {
+            this.updateBasicEnemies(deltaTime);
+            this.updatePathEnemies(deltaTime);
+        }
+
+        // Bullet and enemy collision check
+        for (let bullet of my.sprite.bullet) { // loop through bullets
+            for(let enemy of this.enemies) { // loop through enemies
+                if (this.collides(enemy, bullet)) { // check if they collide
                     this.puff = this.add.sprite(enemy.x, enemy.y, "whitePuff03").setScale(0.25).play("puff");
                     bullet.y = -100;
 
@@ -333,6 +419,7 @@ class GalleryShooter extends Phaser.Scene {
             }
         }
 
+        // enemy on player collision check
         for(let enemy of this.enemies) {
             if (this.collides(my.sprite.spaceShip, enemy)) {
                 this.puff = this.add.sprite(my.sprite.spaceShip.x, my.sprite.spaceShip.y, "whitePuff03").setScale(0.25).play("puff");
@@ -349,8 +436,9 @@ class GalleryShooter extends Phaser.Scene {
                 });
             }
         }
-
         this.enemies = this.enemies.filter(enemy => !enemy.isDead);
+
+        this.checkWave();
     }
 }
 
