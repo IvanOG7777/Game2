@@ -2,7 +2,7 @@ const levels = [
     {
         wave: 1,
         scoreNeeded: 0,
-        enemyCount: 10,
+        enemyCount: 15,
         enemyType: "basic",
         movement: "groupDown"
     },

@@ -31,10 +31,12 @@ class GalleryShooter extends Phaser.Scene {
         //init shot position
         this.playerShotX = 350;
         this.playerShotY = 890;
+        this.playerAlive = true;
 
         this.enemyDirection = 1;
-        this.enemySpeed = 80;
-        this.enemyDropAmount = 25;
+        this.enemyDropAmount = 10;
+        this.enemySpeed = 150;
+        this.enemyDropAmount = 15;
     }
 
     preload() {
@@ -50,6 +52,11 @@ class GalleryShooter extends Phaser.Scene {
         this.load.audio("death2", "explosionCrunch_000.ogg");
         this.load.audio("engine1", "spaceEngineLow_002.ogg");
         this.load.audio("engine2", "spaceEngineSmall_001.ogg");
+
+        this.load.image("whitePuff00", "whitePuff00.png");
+        this.load.image("whitePuff01", "whitePuff01.png");
+        this.load.image("whitePuff02", "whitePuff02.png");
+        this.load.image("whitePuff03", "whitePuff03.png");
 
         // loading score font
         this.load.bitmapFont("rocketSquare", "KennyRocketSquare_0.png", "KennyRocketSquare.fnt");
@@ -78,7 +85,7 @@ class GalleryShooter extends Phaser.Scene {
         this.shoot = this.input.keyboard.addKey('space');
         this.rKey = this.input.keyboard.addKey('R');
 
-        my.text.score = this.add.bitmapText(515, 10,  "rocketSquare", "Score " + this.playerScore);
+        my.text.score = this.add.bitmapText(450, 10,  "rocketSquare", "Score " + this.playerScore);
 
         this.zigzagPath = paths.zigzag;
         this.zagzigPath = paths.zagzig;
@@ -104,6 +111,19 @@ class GalleryShooter extends Phaser.Scene {
         this.isRunning = false;
 
         this.spawnBasicEnemies();
+
+        this.anims.create({
+            key: "puff",
+            frames: [
+                { key: "whitePuff00" },
+                { key: "whitePuff01" },
+                { key: "whitePuff02" },
+                { key: "whitePuff03" },
+            ],
+            frameRate: 20,
+            repeat: 5,
+            hideOnComplete: true
+        });
 
     }
 
@@ -163,22 +183,38 @@ class GalleryShooter extends Phaser.Scene {
         }
     }
 
+    startWave(waveNumber) {}
+
     updateBasicEnemies(deltaTime) {
         let destoryCount = 0;
-        let speed = 50;
         let dt = deltaTime / 1000;
-        let moveAmount = speed * dt;
+        let moveAmount = this.enemySpeed * dt;
+        let touchedEdge = false;
+
         for (let enemy of this.enemies) {
-            enemy.y += moveAmount;
-            if (enemy.y >= 1000) {
-                enemy.destroy();
-                destoryCount++;
+            enemy.x += moveAmount * this.enemyDirection;
+
+            if (enemy.x - enemy.displayWidth / 2 <= 0) { //moveing left
+                touchedEdge = true;
             }
+
+            if (enemy.x + enemy.displayWidth / 2 >= this.game.config.width) {
+                touchedEdge = true;
+            }
+
+        }
+
+        if (touchedEdge == true) {
+            for (let enemy of this.enemies) {
+                enemy.y += this.enemyDropAmount;
+            }
+            this.enemyDirection *= -1;
         }
         console.log(destoryCount);
     }
 
     update(time, deltaTime) {
+        if (this.playerAlive == true) {
         let my = this.my;
 
         // Graph by reference
@@ -249,8 +285,55 @@ class GalleryShooter extends Phaser.Scene {
                 }
             }
         }
-
         this.updateBasicEnemies(deltaTime);
+
+        for (let bullet of my.sprite.bullet) {
+            for(let enemy of this.enemies) {
+                if (this.collides(enemy, bullet)) {
+                    this.puff = this.add.sprite(enemy.x, enemy.y, "whitePuff03").setScale(0.25).play("puff");
+                    bullet.y = -100;
+
+                    enemy.destroy();
+                    enemy.isDead = true;
+
+                    this.playerScore += 25;
+                    this.updateScore();
+
+                    this.sound.play("death2");
+                }
+            }
+        }
+
+        for(let enemy of this.enemies) {
+            if (this.collides(my.sprite.spaceShip, enemy)) {
+                this.puff = this.add.sprite(my.sprite.spaceShip.x, my.sprite.spaceShip.y, "whitePuff03").setScale(0.25).play("puff");
+                this.playerAlive = false;
+                this.sound.play("death1");
+
+                my.sprite.spaceShip.visible = false;
+                my.sprite.leftWing.visible = false;
+                my.sprite.rightWing.visible = false;
+
+                this.add.text(250, 450, "GAME OVER", {
+                    fontSize: "48px",
+                    fill: "#fcfcfc"
+                });
+            }
+        }
+
+        this.enemies = this.enemies.filter(enemy => !enemy.isDead);
+    }
+}
+
+    collides(a, b) {
+        if (Math.abs(a.x - b.x) > (a.displayWidth/2 + b.displayWidth/2)) return false;
+        if (Math.abs(a.y - b.y) > (a.displayHeight/2 + b.displayHeight/2)) return false;
+        return true;
+    }
+
+    updateScore() {
+        let my = this.my;
+        my.text.score.setText("Score " + this.playerScore);
     }
 }
 
