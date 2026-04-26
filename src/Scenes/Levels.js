@@ -35,7 +35,7 @@ const levels = [
     },
     {
         wave: 4,
-        scoreNeeded: 1100,
+        scoreNeeded: 1500,
         enemyCount: 15,
         enemyType: "path",
         movement: "zigzagANDGroup",
@@ -46,7 +46,7 @@ const levels = [
     },
     {
         wave: 5,
-        scoreNeeded: 1500,
+        scoreNeeded: 2000,
         enemyCount: 20,
         enemyType: "path",
         movement: "zagzigANDGroup",
@@ -57,14 +57,14 @@ const levels = [
     },
     {
         wave: 6,
-        scoreNeeded: 2000,
+        scoreNeeded: 2500,
         enemyCount: 45, // 20 path and 25 basic
         enemyType: "mix",
         movement: "groupDownZigzag",
     },
     {
         wave: 7,
-        scoreNeeded: 2600,
+        scoreNeeded: 3000,
         enemyCount: 51,
         enemyType: "mixBoss", // 25 path 25 basic 1 mothership
         movement: "boss",
