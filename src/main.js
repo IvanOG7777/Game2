@@ -1,5 +1,6 @@
 "use strict"
 import GalleryShooter from "./Scenes/Scene.js";
+import Init from "./Scenes/Init.js";
 // game config
 let config = {
     parent: 'phaser-game',
@@ -9,7 +10,7 @@ let config = {
     },
     width: 700,
     height: 1000,
-    scene: [GalleryShooter]
+    scene: [Init, GalleryShooter]
 }
 
 let my = {sprite:{}};
