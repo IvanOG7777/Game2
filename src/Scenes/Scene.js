@@ -103,6 +103,8 @@ class GalleryShooter extends Phaser.Scene {
 
         this.isRunning = false;
 
+        this.spawnBasicEnemies();
+
     }
 
     drawPoints() {
@@ -132,6 +134,48 @@ class GalleryShooter extends Phaser.Scene {
         let curveSmoothness = amountOfPoints * 50;
         console.log(curveSmoothness);
         this.curve.draw(this.graphics, curveSmoothness);
+    }
+
+    spawnBasicEnemies() {
+        let ROWS = 5;
+        let COLS = 5;
+        let startX = 100;
+        let startY = 100;
+        let spacingX = 120;
+        let spacingY = 100;
+
+        for (let enemy of this.enemies) {
+            enemy.destroy();
+        }
+
+        this.enemies = [];
+
+        for (let row = 0; row < ROWS; row++) {
+            for (let col = 0; col < COLS; col++) {
+                let x = startX + (col * spacingX);
+                let y = startY + (row * spacingY);
+
+                let ship = this.add.sprite(x, y, "enemyShip");
+                ship.x = x;
+                ship.y = y;
+                this.enemies.push(ship);
+            }
+        }
+    }
+
+    updateBasicEnemies(deltaTime) {
+        let destoryCount = 0;
+        let speed = 50;
+        let dt = deltaTime / 1000;
+        let moveAmount = speed * dt;
+        for (let enemy of this.enemies) {
+            enemy.y += moveAmount;
+            if (enemy.y >= 1000) {
+                enemy.destroy();
+                destoryCount++;
+            }
+        }
+        console.log(destoryCount);
     }
 
     update(time, deltaTime) {
@@ -202,10 +246,11 @@ class GalleryShooter extends Phaser.Scene {
                         rotateToPath: true,
                         rotationOffset: -90
                     });
+                }
             }
         }
-    }
 
+        this.updateBasicEnemies(deltaTime);
     }
 }
 
