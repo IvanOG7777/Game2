@@ -2,21 +2,25 @@ const levels = [
     {
         wave: 1,
         scoreNeeded: 0,
-        enemyCount: 15,
+        rows: 3,
+        cols: 5,
         enemyType: "basic",
         movement: "groupDown"
     },
     {
         wave: 2,
         scoreNeeded: 300,
-        enemyCount: 25,
+        rows: 5,
+        cols: 5,
         enemyType: "basic",
         movement: "groupDown"
     },
     {
         wave: 3,
         scoreNeeded: 500,
-        enemyCount: 25,
+        enemyCount: 30,
+        rows: 5,
+        cols: 6,
         enemyType: "basic",
         movement: "groupDown"
     },

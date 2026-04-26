@@ -110,7 +110,7 @@ class GalleryShooter extends Phaser.Scene {
 
         this.isRunning = false;
 
-        this.spawnBasicEnemies();
+        this.startWave(3);
 
         this.anims.create({
             key: "puff",
@@ -156,11 +156,11 @@ class GalleryShooter extends Phaser.Scene {
         this.curve.draw(this.graphics, curveSmoothness);
     }
 
-    spawnBasicEnemies() {
-        let ROWS = 5;
-        let COLS = 5;
+    spawnEnemies(movement, passedRows, passedCols) {
+        let ROWS = passedRows;
+        let COLS = passedCols;
         let startX = 100;
-        let startY = 100;
+        let startY = -240;
         let spacingX = 120;
         let spacingY = 100;
 
@@ -181,9 +181,38 @@ class GalleryShooter extends Phaser.Scene {
                 this.enemies.push(ship);
             }
         }
-    }
+}
 
-    startWave(waveNumber) {}
+    startWave(waveNumber) {
+        if (waveNumber > levels.length) {
+            this.add.text(250, 450, "YOU WIN", {
+                    fontSize: "48px",
+                    fill: "#fcfcfc"
+                });
+                return;
+        }
+
+        this.currentWave = waveNumber;
+
+        let level = levels[this.currentWave - 1];
+
+        for (let enemy of this.enemies) {
+            enemy.destroy();
+        }
+
+        for (let bullet of this.my.sprite.bullet) {
+            bullet.destroy();
+        }
+
+        this.my.sprite.bullet = [];
+        this.enemies = [];
+
+        this.enemyDirection = 1;
+
+        if(level.movement == "groupDown") {
+            this.spawnEnemies(level.movement, level.rows, level.cols);
+        }
+    }
 
     updateBasicEnemies(deltaTime) {
         let destoryCount = 0;
