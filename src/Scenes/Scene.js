@@ -1,3 +1,6 @@
+import levels from "./Levels.js";
+import paths from "./Paths.js";
+
 class GalleryShooter extends Phaser.Scene {
 
     graphics;
@@ -17,18 +20,21 @@ class GalleryShooter extends Phaser.Scene {
         this.enemies = [];
         this.boss = null;
 
-        // init position
+        // init ship position
         this.cockpitX = 350;
         this.cockpitY = 900;
-
         this.wingRightX = 396;
         this.wingRightY = 900;
-
         this.wingLeftX = 304;
         this.wingLeftY = 900;
-
+        
+        //init shot position
         this.playerShotX = 350;
         this.playerShotY = 890;
+
+        this.enemyDirection = 1;
+        this.enemySpeed = 80;
+        this.enemyDropAmount = 25;
     }
 
     preload() {
@@ -74,25 +80,28 @@ class GalleryShooter extends Phaser.Scene {
 
         my.text.score = this.add.bitmapText(515, 10,  "rocketSquare", "Score " + this.playerScore);
 
-        this.points = [
-            0, 0,
-        ];
-        this.curve = new Phaser.Curves.Spline(this.points);
-        this.graphics = this.add.graphics();
+        this.zigzagPath = paths.zigzag;
+        this.zagzigPath = paths.zagzig;
+        this.bossPath = paths.boss;
 
-        this.xImages = [];
-        this.drawPoints();
-        this.drawLine();
+        let currentLevel = levels[this.currentWave - 1];
+        let movementName = currentLevel.movement;
 
-        this.mouseDown = this.input.on('pointerdown', (pointer) => {
-            this.addPoint({x: pointer.x, y: pointer.y});
+        if (movementName != "groupDown") {
+            this.points = paths[movementName];
+            this.curve = new Phaser.Curves.Spline(this.points);
+
+            this.graphics = this.add.graphics();
+
+            this.xImages = [];
+            this.drawPoints();
             this.drawLine();
-        });
+
+            my.sprite.enemyShip = this.add.follower(this.curve, 10, 10, "enemyShip");
+            my.sprite.enemyShip.visible = false;
+        }
 
         this.isRunning = false;
-
-        my.sprite.enemyShip = this.add.follower(this.curve, 10, 10, "enemyShip");
-        my.sprite.enemyShip.visible = false;
 
     }
 
@@ -186,7 +195,7 @@ class GalleryShooter extends Phaser.Scene {
                         from: 0,
                         to: 1,
                         delay: 0,
-                        duration: 2000,
+                        duration: 3500,
                         ease: 'Sine.easeInOut',
                         repeat: -1,
                         yoyo: true,
@@ -199,3 +208,5 @@ class GalleryShooter extends Phaser.Scene {
 
     }
 }
+
+export default GalleryShooter;

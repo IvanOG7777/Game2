@@ -1,5 +1,5 @@
 "use strict"
-
+import GalleryShooter from "./Scenes/Scene.js";
 // game config
 let config = {
     parent: 'phaser-game',
