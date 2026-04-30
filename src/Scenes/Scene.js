@@ -16,6 +16,12 @@ class GalleryShooter extends Phaser.Scene {
         this.maxBullets = 5;
         this.playerScore = 0;
 
+        this.enemyBullets = [];
+        this.enemyShootTimer = 0;
+        this.enemyShootDelay = 4500;
+        this.enemyBulletSpeed = 300;
+        this.bossDead = false;
+
         this.currentWave = 1;
         this.enemies = [];
         this.enemySize;
@@ -29,11 +35,11 @@ class GalleryShooter extends Phaser.Scene {
 
         // init ship position
         this.cockpitX = 350;
-        this.cockpitY = 900;
+        this.cockpitY = 800;
         this.wingRightX = 396;
-        this.wingRightY = 900;
+        this.wingRightY = 800;
         this.wingLeftX = 304;
-        this.wingLeftY = 900;
+        this.wingLeftY = 800;
         
         //init shot position
         this.playerShotX = 350;
@@ -41,16 +47,15 @@ class GalleryShooter extends Phaser.Scene {
         this.playerAlive = true;
 
         this.enemyDirection = 1;
-        this.enemyDropAmount = 10;
         this.enemySpeed = 150;
         this.enemyDropAmount = 15;
+        this.edgeHandled = false;
     }
 
     preload() {
         this.load.setPath("./assets/"); // loading assets
 
         this.load.atlasXML("spaceParts", "sheet.png", "sheet.xml"); // loading xml sheets
-        this.load.image("x-mark", "numeralX.png");             // x marks the spot
         this.load.image("enemyShip", "enemyGreen1.png");       // spaceship that runs along the path
 
         // loading necessary audios
@@ -134,35 +139,6 @@ class GalleryShooter extends Phaser.Scene {
 
     }
 
-    drawPoints() {
-        for (let point of this.curve.points) {
-            this.xImages.push(this.add.image(point.x, point.y, "x-mark"));
-        }
-    }
-
-    clearPoints() {
-        this.curve.points = [];
-        this.graphics.clear();
-        for (let img of this.xImages) {
-            img.destroy();
-        }
-    }
-
-    addPoint(point) {
-        this.curve.addPoint(point);
-        this.xImages.push(this.add.image(point.x, point.y, "x-mark"));
-    }
-
-    // Draws the spline
-    drawLine() {
-        this.graphics.clear();
-        this.graphics.lineStyle(2, 0xffffff, 1);
-        let amountOfPoints = this.curve.points.length;
-        let curveSmoothness = amountOfPoints * 50;
-        console.log(curveSmoothness);
-        this.curve.draw(this.graphics, curveSmoothness);
-    }
-
     spawnEnemies(movement, passedRows, passedCols, passedStartX, passedStartY) {
         let ROWS = passedRows;
         let COLS = passedCols;
@@ -177,6 +153,11 @@ class GalleryShooter extends Phaser.Scene {
                 let y = startY + (row * spacingY);
 
                 let ship = this.add.sprite(x, y, "enemyShip");
+                let index = row * COLS * 1.5;
+                console.log(index);
+                if (movement == "groupDown") {
+                    ship.canShoot = index % 2 == 0;
+                }
                 ship.x = x;
                 ship.y = y;
                 this.enemies.push(ship);
@@ -277,13 +258,16 @@ class GalleryShooter extends Phaser.Scene {
 
         }
 
-        if (touchedEdge == true) {// if true
+        if (touchedEdge == true && this.edgeHandled == false) {// if true
             for (let enemy of this.enemies) { // move each enemy down along the y axis
                 enemy.y += this.enemyDropAmount;
             }
             this.enemyDirection *= -1; // change the direction, -1 left, 1 right
+            this.edgeHandled = true;
         }
-        console.log(destoryCount);
+        if (touchedEdge == false) {
+            this.edgeHandled = false;
+        }
     }
 
     updatePathEnemies(deltaTime) {
@@ -291,6 +275,7 @@ class GalleryShooter extends Phaser.Scene {
 
         if (this.pathEnemiesSpawned < this.pathSpawnLimit && this.pathTimer >= this.pathSpawnDelay) {
             let enemy = this.add.follower(this.curve, 10, 10, "enemyShip");
+            enemy.canShoot = this.pathEnemiesSpawned % 5 == 0;
             enemy.visible = true;
             enemy.x = this.curve.points[0].x;
             enemy.y = this.curve.points[0].y;
@@ -298,7 +283,7 @@ class GalleryShooter extends Phaser.Scene {
             from: 0,
             to: 1,
             delay: 0,
-            duration: 3500,
+            duration: 7000 - (this.currentWave * 500),
             ease: 'Sine.easeInOut',
             repeat: -1,
             yoyo: true,
@@ -310,6 +295,56 @@ class GalleryShooter extends Phaser.Scene {
         this.pathTimer = 0;
     }
 }
+
+    enemyShoot(deltaTime) {
+        this.enemyShootTimer += deltaTime;
+
+        if (this.enemyShootTimer < this.enemyShootDelay) {
+            return;
+        }
+
+        for (let enemy of this.enemies) {
+            if (enemy.canShoot == true && enemy.active) {
+                let bullet = this.add.sprite(enemy.x, enemy.y + 20, "spaceParts", "laserBlue01.png");
+                bullet.setFlipY(true);
+                this.enemyBullets.push(bullet);   
+            }
+        }
+
+        this.enemyShootTimer = 0;
+    }
+
+    resetGameStateVariables() {
+        this.my = { sprite: {}, text: {} };
+
+        this.my.sprite.bullet = [];
+        this.enemyBullets = [];
+        this.enemies = [];
+
+        this.playerScore = 0;
+        this.currentWave = 1;
+        this.playerAlive = true;
+
+        this.enemyShootTimer = 0;
+        this.pathEnemiesSpawned = 0;
+        this.pathTimer = 0;
+        this.pathSpawnLimit = 0;
+
+        this.speedUp = false;
+        this.enemyDirection = 1;
+        this.enemySpeed = 150;
+        this.edgeHandled = false;
+
+        this.resetText = null;
+        this.gameOverText = null;
+    } 
+
+    reset() {
+        if (Phaser.Input.Keyboard.JustDown(this.rKey)) {
+            this.resetGameStateVariables();
+            this.scene.start("initScene");
+        }
+    }
 
     update(time, deltaTime) {
         if (this.playerAlive == true) {
@@ -359,33 +394,6 @@ class GalleryShooter extends Phaser.Scene {
 
         my.sprite.bullet = my.sprite.bullet.filter((bullet) => bullet.y > -(bullet.displayHeight/2));
 
-        if (Phaser.Input.Keyboard.JustDown(this.rKey)) {
-            console.log("Run mode");
-            if (this.isRunning == true) {
-                my.sprite.enemyShip.stopFollow();
-                my.sprite.enemyShip.visible = false;
-                this.isRunning = false;
-            } else {
-                if (this.curve.points.length > 0) {
-                    this.isRunning = true;
-                    my.sprite.enemyShip.visible = true;
-                    my.sprite.enemyShip.x = this.curve.points[0].x;
-                    my.sprite.enemyShip.y = this.curve.points[0].y;
-                    my.sprite.enemyShip.startFollow({
-                        from: 0,
-                        to: 1,
-                        delay: 0,
-                        duration: 3500,
-                        ease: 'Sine.easeInOut',
-                        repeat: -1,
-                        yoyo: true,
-                        rotateToPath: true,
-                        rotationOffset: -90
-                    });
-                }
-            }
-        }
-
         let level = levels[this.currentWave - 1];
         if (level.movement == "groupDown") {
             // update the position of enemies
@@ -400,6 +408,23 @@ class GalleryShooter extends Phaser.Scene {
             this.updateBasicEnemies(deltaTime);
             this.updatePathEnemies(deltaTime);
         }
+
+        this.enemyShoot(deltaTime);
+
+        let enemyMoveAmount = this.enemyBulletSpeed * dt;
+
+        for (let bullet of this.enemyBullets) {
+            bullet.y += enemyMoveAmount;
+        }
+
+        this.enemyBullets = this.enemyBullets.filter((bullet) => {
+            if (bullet.y < this.game.config.height + bullet.displayHeight) {
+            return true;
+        }
+
+        bullet.destroy();
+        return false;
+    });
 
         // Bullet and enemy collision check
         for (let bullet of my.sprite.bullet) { // loop through bullets
@@ -419,6 +444,29 @@ class GalleryShooter extends Phaser.Scene {
             }
         }
 
+        for (let bullet of this.enemyBullets) {
+            if (this.collides(my.sprite.spaceShip, bullet)) {
+                bullet.destroy();
+                bullet.isDead = true;
+                
+                this.puff = this.add.sprite( my.sprite.spaceShip.x, my.sprite.spaceShip.y, "whitePuff03" ).setScale(0.25).play("puff");
+                
+                this.playerAlive = false;
+                this.sound.play("death1");
+                
+                my.sprite.spaceShip.visible = false;
+                my.sprite.leftWing.visible = false;
+                my.sprite.rightWing.visible = false;
+            
+                this.add.text(250, 450, "GAME OVER", {
+                    fontSize: "48px",
+                    fill: "#ff0000"
+        });
+    }
+}
+
+this.enemyBullets = this.enemyBullets.filter(bullet => !bullet.isDead);
+
         // enemy on player collision check
         for(let enemy of this.enemies) {
             if (this.collides(my.sprite.spaceShip, enemy)) {
@@ -430,15 +478,36 @@ class GalleryShooter extends Phaser.Scene {
                 my.sprite.leftWing.visible = false;
                 my.sprite.rightWing.visible = false;
 
-                this.add.text(250, 450, "GAME OVER", {
-                    fontSize: "48px",
-                    fill: "#fcfcfc"
-                });
+                let text = this.add.text(this.game.config.width / 2, this.game.config.height / 2, "GAME OVER", { fontSize: "48px", fill: "#ff0000" });
+                text.setOrigin(0.5);
             }
         }
         this.enemies = this.enemies.filter(enemy => !enemy.isDead);
 
         this.checkWave();
+    }
+    
+    if (this.playerAlive == false) {
+        
+        if (!this.resetText) {
+            this.resetText = this.add.text(
+            this.game.config.width / 2, 600, "RESET BY PRESSING R",{ fontSize: "48px", fill: "#00fd22" } ).setOrigin(0.5);
+        }
+        this.reset();
+    }
+
+    if (this.playerAlive == true && (this.boss == false || this.enemies.length == 0)) {
+        if (!this.winText) {
+            this.resetText = this.add.text(
+            this.game.config.width / 2, 600, "YOU WIN!!!!",{ fontSize: "48px", fill: "#00fd22" } ).setOrigin(0.5);
+        }
+
+        if (!this.resetText) {
+            this.resetText = this.add.text(
+            this.game.config.width / 2, 600, "RESET BY PRESSING R",{ fontSize: "48px", fill: "#00fd22" } ).setOrigin(0.5);
+        }
+
+        this.reset();
     }
 }
 

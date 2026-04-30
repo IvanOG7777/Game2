@@ -4,14 +4,14 @@ class Init extends Phaser.Scene {
     }
 
      create() {
-        this.add.text(250, 400, "GALLERY SHOOTER", {
+        this.add.text(175, 400, "GALLERY SHOOTER", {
             fontSize: "40px",
-            fill: "#ffffff"
+            fill: "#00fd22"
         });
 
-        this.add.text(230, 500, "Press SPACE to Start", {
+        this.add.text(220, 500, "Press SPACE to Start", {
             fontSize: "24px",
-            fill: "#ffffff"
+            fill: "#00fd22"
         });
 
         this.space = this.input.keyboard.addKey(

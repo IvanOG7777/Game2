@@ -9,7 +9,7 @@ let config = {
         pixelArt: true
     },
     width: 700,
-    height: 1000,
+    height: 900,
     scene: [Init, GalleryShooter]
 }
 
