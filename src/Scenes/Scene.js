@@ -1,5 +1,12 @@
 import levels from "./Levels.js";
 import paths from "./Paths.js";
+import {
+    startWave,
+    spawnEnemies,
+    checkWave,
+    updateBasicEnemies,
+    updatePathEnemies
+} from "./GameFunctions.js";
 
 class GalleryShooter extends Phaser.Scene {
 
@@ -122,26 +129,22 @@ class GalleryShooter extends Phaser.Scene {
         this.bossPath = paths.boss;
 
 
+        // Get current level by reference and movement name related to level
         let currentLevel = levels[this.currentWave - 1];
         let movementName = currentLevel.movement;
 
+        // As long as current level movemnt isnt "groupDown"
         if (movementName != "groupDown") {
+            // get the movement points and plot on the curve
             this.points = paths[movementName];
             this.curve = new Phaser.Curves.Spline(this.points);
 
-            this.graphics = this.add.graphics();
-
-            this.xImages = [];
-            this.drawPoints();
-            this.drawLine();
-
-            my.sprite.enemyShip = this.add.follower(this.curve, 10, 10, "enemyShip");
-            my.sprite.enemyShip.visible = false;
+            my.sprite.enemyShip = this.add.follower(this.curve, 10, 10, "enemyShip"); // add a new follower to curve
+            my.sprite.enemyShip.visible = false; // keep hidden
         }
 
-        this.isRunning = false;
 
-        this.startWave(1);
+        startWave(this, 1);
 
         this.anims.create({
             key: "puff",
@@ -151,168 +154,13 @@ class GalleryShooter extends Phaser.Scene {
                 { key: "whitePuff02" },
                 { key: "whitePuff03" },
             ],
-            frameRate: 20,
-            repeat: 5,
+            frameRate: 60,
+            repeat: 10,
             hideOnComplete: true
         });
 
     }
 
-    spawnEnemies(movement, passedRows, passedCols, passedStartX, passedStartY) {
-        let ROWS = passedRows;
-        let COLS = passedCols;
-        let startX = passedStartX;
-        let startY = passedStartY;
-        let spacingX = 120;
-        let spacingY = 100;
-
-        for (let row = 0; row < ROWS; row++) {
-            for (let col = 0; col < COLS; col++) {
-                let x = startX + (col * spacingX);
-                let y = startY + (row * spacingY);
-
-                let ship = this.add.sprite(x, y, "enemyShip");
-                let index = row * COLS * 1.5;
-                console.log(index);
-                if (movement == "groupDown") {
-                    ship.canShoot = index % 2 == 0;
-                }
-                ship.x = x;
-                ship.y = y;
-                this.enemies.push(ship);
-            }
-        }
-    }
-
-    startWave(waveNumber) {
-        if (waveNumber > levels.length) {
-            this.add.text(250, 450, "YOU WIN", {
-                    fontSize: "48px",
-                    fill: "#fcfcfc"
-                });
-                return;
-        }
-
-        this.currentWave = waveNumber;
-
-        let level = levels[this.currentWave - 1];
-
-        for (let bullet of this.my.sprite.bullet) {
-            bullet.destroy();
-        }
-
-        this.my.sprite.bullet = [];
-
-        this.enemyDirection = 1;
-
-        if(level.movement == "groupDown") {
-            this.spawnEnemies(level.movement, level.rows, level.cols, level.startX, level.startY);
-        }
-
-        if (level.movement == "zigzag" || level.movement == "zagzig") {
-            this.pathEnemiesSpawned = 0;
-            this.pathSpawnLimit = level.enemyCount;
-            this.pathSpawnDelay = 1000;
-            this.pathTimer = 0;
-
-            this.points = paths[level.movement];
-            this.curve = new Phaser.Curves.Spline(this.points);
-        }
-
-        if (level.movement == "zigzagANDGroup" || level.movement == "zagzigANDGroup") {
-            this.spawnEnemies(level.movement, level.rows, level.cols, level.startX, level.startY);
-
-            this.pathEnemiesSpawned = 0;
-            this.pathSpawnLimit = level.enemyCount;
-            this.pathSpawnDelay = 1000;
-            this.pathTimer = 0;
-            
-            this.points = paths[level.movement];
-            this.curve = new Phaser.Curves.Spline(this.points);
-        }
-
-        this.enemySize = this.enemies.length;
-    }
-
-    checkWave() {
-        let nextWave = this.currentWave + 1; // get next wave
-
-        if (nextWave > levels.length) { // check if greater then level count
-            return;
-        }
-
-        let nextLevel = levels[nextWave - 1]; // get next level
-
-        if (this. playerScore >= nextLevel.scoreNeeded) { // check player score
-            this.startWave(nextWave); // add next level
-        }
-    }
-
-    updateBasicEnemies(deltaTime) {
-        let dt = deltaTime / 1000;
-        let moveAmount = this.enemySpeed * dt;
-        let touchedEdge = false;
-        let level = levels[this.currentWave - 1];
-        let levelScore = level.speedBoostScore;
-
-        if (this.speedUp == false) {
-            if (this.playerScore >= levelScore) {
-                this.enemySpeed *= 2;
-                this.speedUp = true;
-            }
-        }
-
-        for (let enemy of this.enemies) { // loop though all enemies
-            enemy.x += moveAmount * this.enemyDirection;
-
-            if (enemy.x - enemy.displayWidth / 2 <= 0) { // If one enemy touches left wall
-                touchedEdge = true; // set to true
-            }
-
-            if (enemy.x + enemy.displayWidth / 2 >= this.game.config.width) { // if one enemy touches right wall
-                touchedEdge = true; // set to true
-            }
-
-        }
-
-        if (touchedEdge == true && this.edgeHandled == false) {// if true
-            for (let enemy of this.enemies) { // move each enemy down along the y axis
-                enemy.y += this.enemyDropAmount;
-            }
-            this.enemyDirection *= -1; // change the direction, -1 left, 1 right
-            this.edgeHandled = true;
-        }
-        
-        if (touchedEdge == false) {
-            this.edgeHandled = false;
-        }
-    }
-
-    updatePathEnemies(deltaTime) {
-        this.pathTimer += deltaTime;
-
-        if (this.pathEnemiesSpawned < this.pathSpawnLimit && this.pathTimer >= this.pathSpawnDelay) {
-            let enemy = this.add.follower(this.curve, 10, 10, "enemyShip");
-            enemy.canShoot = this.pathEnemiesSpawned % 5 == 0;
-            enemy.visible = true;
-            enemy.x = this.curve.points[0].x;
-            enemy.y = this.curve.points[0].y;
-            enemy.startFollow({
-            from: 0,
-            to: 1,
-            delay: 0,
-            duration: 7000 - (this.currentWave * 500),
-            ease: 'Sine.easeInOut',
-            repeat: -1,
-            yoyo: true,
-            rotateToPath: true,
-            rotationOffset: -90
-        });
-        this.enemies.push(enemy);
-        this.pathEnemiesSpawned++;
-        this.pathTimer = 0;
-    }
-}
 
     enemyShoot(deltaTime) {
         this.enemyShootTimer += deltaTime;
@@ -367,6 +215,16 @@ class GalleryShooter extends Phaser.Scene {
         }
     }
 
+    checkPlayerStatus(playerStatus) {
+        if (this.playerAlive == false) {
+            if (!this.resetText) {
+            this.resetText = this.add.text(
+            this.game.config.width / 2, 600, "RESET BY PRESSING R",{ fontSize: "48px", fill: "#00fd22" } ).setOrigin(0.5);
+        }
+        this.reset();
+    }
+}
+
     update(time, deltaTime) {
         if (this.playerAlive == true) {
         let my = this.my;
@@ -418,16 +276,16 @@ class GalleryShooter extends Phaser.Scene {
         let level = levels[this.currentWave - 1];
         if (level.movement == "groupDown") {
             // update the position of enemies
-            this.updateBasicEnemies(deltaTime);
+            updateBasicEnemies(this, deltaTime);
         }
 
         if (level.movement == "zigzag" || level.movement == "zagzig") {
-            this.updatePathEnemies(deltaTime);
+            updatePathEnemies(this, deltaTime);
         }
 
         if (level.movement == "zigzagANDGroup" || level.movement == "zagzigANDGroup") {
-            this.updateBasicEnemies(deltaTime);
-            this.updatePathEnemies(deltaTime);
+            updateBasicEnemies(this,  deltaTime);
+            updatePathEnemies(this, deltaTime);
         }
 
         this.enemyShoot(deltaTime);
@@ -479,7 +337,7 @@ class GalleryShooter extends Phaser.Scene {
                 my.sprite.leftWing.visible = false;
                 my.sprite.rightWing.visible = false;
             
-                this.add.text(250, 450, "GAME OVER", {
+                this.add.text(250, 450, "GAME OVER died to laser", {
                     fontSize: "48px",
                     fill: "#ff0000"
         });
@@ -498,23 +356,17 @@ class GalleryShooter extends Phaser.Scene {
                 my.sprite.leftWing.visible = false;
                 my.sprite.rightWing.visible = false;
 
-                let text = this.add.text(this.game.config.width / 2, this.game.config.height / 2, "GAME OVER", { fontSize: "48px", fill: "#ff0000" });
+                this.checkPlayerStatus(this.playerAlive);
+                let text = this.add.text(this.game.config.width / 2, this.game.config.height / 2, "GAME OVER died to enemy collision", { fontSize: "48px", fill: "#ff0000" });
                 text.setOrigin(0.5);
             }
         }
         this.enemies = this.enemies.filter(enemy => !enemy.isDead);
 
-        this.checkWave();
+        checkWave(this);
     }
     
-    if (this.playerAlive == false) {
-        
-        if (!this.resetText) {
-            this.resetText = this.add.text(
-            this.game.config.width / 2, 600, "RESET BY PRESSING R",{ fontSize: "48px", fill: "#00fd22" } ).setOrigin(0.5);
-        }
-        this.reset();
-    }
+    this.checkPlayerStatus(this.playerAlive);
 
     if (this.playerAlive == true && (this.boss == false || this.enemies.length == 0)) {
         if (!this.winText) {
