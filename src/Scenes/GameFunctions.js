@@ -165,4 +165,92 @@ function startWave(scene, waveNumber) {
     }
 }
 
-export {spawnEnemies, startWave, checkWave, updateBasicEnemies, updatePathEnemies};
+ function enemyShoot(scene, deltaTime) {
+        scene.enemyShootTimer += deltaTime;
+
+        if (scene.enemyShootTimer < scene.enemyShootDelay) {
+            return;
+        }
+
+        for (let enemy of scene.enemies) {
+            if (enemy.canShoot == true && enemy.active) {
+                let bullet = scene.add.sprite(enemy.x, enemy.y + 20, "spaceParts", "laserBlue01.png");
+                bullet.setFlipY(true);
+                scene.enemyBullets.push(bullet);   
+            }
+        }
+
+        scene.enemyShootTimer = 0;
+    }
+
+function enemyOnPlayerCollision(scene) {
+        for(let enemy of scene.enemies) {
+            if (scene.collides(scene.my.sprite.spaceShip, enemy)) {
+                scene.puff = scene.add.sprite(scene.my.sprite.spaceShip.x, scene.my.sprite.spaceShip.y, "whitePuff03").setScale(0.25).play("puff");
+                scene.playerAlive = false;
+                scene.my.sounds.death2.play({volume: 0.8});
+
+                scene.my.sprite.spaceShip.visible = false;
+                scene.my.sprite.leftWing.visible = false;
+                scene.my.sprite.rightWing.visible = false;
+
+                scene.checkPlayerStatus(scene.playerAlive);
+                let text = scene.add.text(scene.game.config.width / 2, scene.game.config.height / 2, "GAME OVER died to enemy collision", { fontSize: "48px", fill: "#ff0000" });
+                text.setOrigin(0.5);
+            }
+        }
+}
+
+function bulletOnPlayerCollision(scene) {
+    for (let bullet of scene.enemyBullets) {
+        if (scene.collides(scene.my.sprite.spaceShip, bullet)) {
+            bullet.destroy();
+            bullet.isDead = true;
+                
+            scene.puff = scene.add.sprite(scene.my.sprite.spaceShip.x, scene.my.sprite.spaceShip.y, "whitePuff03" ).setScale(0.25).play("puff");
+                
+            scene.playerAlive = false;
+            scene.my.sounds.death1.play({volume: 1.0});
+                
+            scene.my.sprite.spaceShip.visible = false;
+            scene.my.sprite.leftWing.visible = false;
+            scene.my.sprite.rightWing.visible = false;
+            
+            scene.add.text(250, 450, "GAME OVER died to laser", { fontSize: "48px", fill: "#ff0000"});
+        }
+    }
+}
+
+function bulletOnEnemyCollision(scene) {
+    // Bullet and enemy collision check
+        for (let bullet of scene.my.sprite.bullet) { // loop through bullets
+            for(let enemy of scene.enemies) { // loop through enemies
+                if (scene.collides(enemy, bullet)) { // check if they collide
+                    scene.puff = scene.add.sprite(enemy.x, enemy.y, "whitePuff03").setScale(0.25).play("puff");
+                    bullet.y = -100;
+
+                    enemy.destroy();
+                    enemy.isDead = true;
+
+                    scene.playerScore += 25;
+                    scene.updateScore();
+
+                    scene.my.sounds.death2.play({volume: 0.8});
+                }
+            }
+        }
+}
+
+
+
+export {
+    spawnEnemies,
+    startWave,
+    checkWave,
+    updateBasicEnemies,
+    updatePathEnemies,
+    enemyShoot,
+    enemyOnPlayerCollision,
+    bulletOnPlayerCollision,
+    bulletOnEnemyCollision
+};

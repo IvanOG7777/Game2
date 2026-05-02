@@ -5,7 +5,11 @@ import {
     spawnEnemies,
     checkWave,
     updateBasicEnemies,
-    updatePathEnemies
+    updatePathEnemies,
+    enemyShoot,
+    enemyOnPlayerCollision,
+    bulletOnPlayerCollision,
+    bulletOnEnemyCollision
 } from "./GameFunctions.js";
 
 class GalleryShooter extends Phaser.Scene {
@@ -161,25 +165,6 @@ class GalleryShooter extends Phaser.Scene {
 
     }
 
-
-    enemyShoot(deltaTime) {
-        this.enemyShootTimer += deltaTime;
-
-        if (this.enemyShootTimer < this.enemyShootDelay) {
-            return;
-        }
-
-        for (let enemy of this.enemies) {
-            if (enemy.canShoot == true && enemy.active) {
-                let bullet = this.add.sprite(enemy.x, enemy.y + 20, "spaceParts", "laserBlue01.png");
-                bullet.setFlipY(true);
-                this.enemyBullets.push(bullet);   
-            }
-        }
-
-        this.enemyShootTimer = 0;
-    }
-
     resetGameStateVariables() {
         this.my = { sprite: {}, text: {} };
 
@@ -288,7 +273,7 @@ class GalleryShooter extends Phaser.Scene {
             updatePathEnemies(this, deltaTime);
         }
 
-        this.enemyShoot(deltaTime);
+        enemyShoot(this, deltaTime);
 
         let enemyMoveAmount = this.enemyBulletSpeed * dt;
 
@@ -305,62 +290,15 @@ class GalleryShooter extends Phaser.Scene {
         return false;
     });
 
-        // Bullet and enemy collision check
-        for (let bullet of my.sprite.bullet) { // loop through bullets
-            for(let enemy of this.enemies) { // loop through enemies
-                if (this.collides(enemy, bullet)) { // check if they collide
-                    this.puff = this.add.sprite(enemy.x, enemy.y, "whitePuff03").setScale(0.25).play("puff");
-                    bullet.y = -100;
+        bulletOnEnemyCollision(this);
 
-                    enemy.destroy();
-                    enemy.isDead = true;
+        bulletOnPlayerCollision(this);
 
-                    this.playerScore += 25;
-                    this.updateScore();
-
-                    this.my.sounds.death2.play({volume: 0.8});
-                }
-            }
-        }
-
-        for (let bullet of this.enemyBullets) {
-            if (this.collides(my.sprite.spaceShip, bullet)) {
-                bullet.destroy();
-                bullet.isDead = true;
-                
-                this.puff = this.add.sprite( my.sprite.spaceShip.x, my.sprite.spaceShip.y, "whitePuff03" ).setScale(0.25).play("puff");
-                
-                this.playerAlive = false;
-                this.my.sounds.death1.play({volume: 1.0});
-                
-                my.sprite.spaceShip.visible = false;
-                my.sprite.leftWing.visible = false;
-                my.sprite.rightWing.visible = false;
-            
-                this.add.text(250, 450, "GAME OVER died to laser", {
-                    fontSize: "48px",
-                    fill: "#ff0000"
-        });
-    }
-}
         this.enemyBullets = this.enemyBullets.filter(bullet => !bullet.isDead);
 
         // enemy on player collision check
-        for(let enemy of this.enemies) {
-            if (this.collides(my.sprite.spaceShip, enemy)) {
-                this.puff = this.add.sprite(my.sprite.spaceShip.x, my.sprite.spaceShip.y, "whitePuff03").setScale(0.25).play("puff");
-                this.playerAlive = false;
-                this.my.sounds.death2.play({volume: 0.8});
+        enemyOnPlayerCollision(this);
 
-                my.sprite.spaceShip.visible = false;
-                my.sprite.leftWing.visible = false;
-                my.sprite.rightWing.visible = false;
-
-                this.checkPlayerStatus(this.playerAlive);
-                let text = this.add.text(this.game.config.width / 2, this.game.config.height / 2, "GAME OVER died to enemy collision", { fontSize: "48px", fill: "#ff0000" });
-                text.setOrigin(0.5);
-            }
-        }
         this.enemies = this.enemies.filter(enemy => !enemy.isDead);
 
         checkWave(this);
