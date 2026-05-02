@@ -64,7 +64,9 @@ class GalleryShooter extends Phaser.Scene {
         this.load.audio("death2", "explosionCrunch_000.ogg");
         this.load.audio("engine1", "spaceEngineLow_002.ogg");
         this.load.audio("engine2", "spaceEngineSmall_001.ogg");
+        this.load.audio("gameMusic", "the_mountain-game-game-music-508018.mp3");
 
+        //Images for death
         this.load.image("whitePuff00", "whitePuff00.png");
         this.load.image("whitePuff01", "whitePuff01.png");
         this.load.image("whitePuff02", "whitePuff02.png");
@@ -88,6 +90,19 @@ class GalleryShooter extends Phaser.Scene {
         rightWing.angle = 180;
         leftWing.angle = -180
 
+        // Creating objects of sounds from preload
+        my.sounds = {};
+        my.sounds.laser = this.sound.add("laser");
+        my.sounds.death1 = this.sound.add("death1");
+        my.sounds.death2 = this.sound.add("death2");
+        my.sounds.engine1 = this.sound.add("engine1");
+        my.sounds.engine2 = this.sound.add("engine2");
+        my.sounds.music = this.sound.add("gameMusic");
+
+
+        my.sounds.music.stop();
+        my.sounds.music.play({loop: true, volume: 0.2});
+    
 
         //Action Buttons
         this.moveLeft = this.input.keyboard.addKey('A');
@@ -97,11 +112,15 @@ class GalleryShooter extends Phaser.Scene {
         this.shoot = this.input.keyboard.addKey('space');
         this.rKey = this.input.keyboard.addKey('R');
 
+        // reference to store on screen texts
+        //TODO: do the rest of the texts like this
         my.text.score = this.add.bitmapText(450, 10,  "rocketSquare", "Score " + this.playerScore);
 
+        // Create references to the paths from path file
         this.zigzagPath = paths.zigzag;
         this.zagzigPath = paths.zagzig;
         this.bossPath = paths.boss;
+
 
         let currentLevel = levels[this.currentWave - 1];
         let movementName = currentLevel.movement;
@@ -216,7 +235,7 @@ class GalleryShooter extends Phaser.Scene {
     }
 
     checkWave() {
-        let nextWave = this.currentWave + 1; // get enxt wave
+        let nextWave = this.currentWave + 1; // get next wave
 
         if (nextWave > levels.length) { // check if greater then level count
             return;
@@ -226,12 +245,10 @@ class GalleryShooter extends Phaser.Scene {
 
         if (this. playerScore >= nextLevel.scoreNeeded) { // check player score
             this.startWave(nextWave); // add next level
-            console.log("Starting next wave");
         }
     }
 
     updateBasicEnemies(deltaTime) {
-        let destoryCount = 0;
         let dt = deltaTime / 1000;
         let moveAmount = this.enemySpeed * dt;
         let touchedEdge = false;
@@ -265,6 +282,7 @@ class GalleryShooter extends Phaser.Scene {
             this.enemyDirection *= -1; // change the direction, -1 left, 1 right
             this.edgeHandled = true;
         }
+        
         if (touchedEdge == false) {
             this.edgeHandled = false;
         }
@@ -341,6 +359,9 @@ class GalleryShooter extends Phaser.Scene {
 
     reset() {
         if (Phaser.Input.Keyboard.JustDown(this.rKey)) {
+            if (this.my?.sounds?.music) {
+                this.my.sounds.music.stop();
+            }
             this.resetGameStateVariables();
             this.scene.start("initScene");
         }
@@ -350,7 +371,7 @@ class GalleryShooter extends Phaser.Scene {
         if (this.playerAlive == true) {
         let my = this.my;
 
-        // Graph by reference
+        // Grap by reference
         let cockpit = my.sprite.spaceShip;
         let leftWing = my.sprite.leftWing;
         let rightWing = my.sprite.rightWing;
@@ -383,7 +404,7 @@ class GalleryShooter extends Phaser.Scene {
                 my.sprite.bullet.push(this.add.sprite(
                     my.sprite.spaceShip.x, my.sprite.spaceShip.y-(my.sprite.spaceShip.displayHeight/2), "spaceParts", "laserRed01.png") // push new bullet to array and add sprite
                 );
-                this.sound.play("laser");   
+                this.my.sounds.laser.play({volume: 0.8}); 
             }
         }
 
@@ -439,7 +460,7 @@ class GalleryShooter extends Phaser.Scene {
                     this.playerScore += 25;
                     this.updateScore();
 
-                    this.sound.play("death2");
+                    this.my.sounds.death2.play({volume: 0.8});
                 }
             }
         }
@@ -452,7 +473,7 @@ class GalleryShooter extends Phaser.Scene {
                 this.puff = this.add.sprite( my.sprite.spaceShip.x, my.sprite.spaceShip.y, "whitePuff03" ).setScale(0.25).play("puff");
                 
                 this.playerAlive = false;
-                this.sound.play("death1");
+                this.my.sounds.death1.play({volume: 1.0});
                 
                 my.sprite.spaceShip.visible = false;
                 my.sprite.leftWing.visible = false;
@@ -464,15 +485,14 @@ class GalleryShooter extends Phaser.Scene {
         });
     }
 }
-
-this.enemyBullets = this.enemyBullets.filter(bullet => !bullet.isDead);
+        this.enemyBullets = this.enemyBullets.filter(bullet => !bullet.isDead);
 
         // enemy on player collision check
         for(let enemy of this.enemies) {
             if (this.collides(my.sprite.spaceShip, enemy)) {
                 this.puff = this.add.sprite(my.sprite.spaceShip.x, my.sprite.spaceShip.y, "whitePuff03").setScale(0.25).play("puff");
                 this.playerAlive = false;
-                this.sound.play("death1");
+                this.my.sounds.death2.play({volume: 0.8});
 
                 my.sprite.spaceShip.visible = false;
                 my.sprite.leftWing.visible = false;
