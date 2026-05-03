@@ -25,6 +25,7 @@ class GalleryShooter extends Phaser.Scene {
         this.my.sprite.bullet = [];
         this.maxBullets = 5;
         this.playerScore = 0;
+        this.playerHealth = 3;
 
         this.enemyBullets = [];
         this.enemyShootTimer = 0;
@@ -67,6 +68,7 @@ class GalleryShooter extends Phaser.Scene {
 
         // loading necessary audios
         this.load.audio("laser", "laser5.ogg");
+        this.load.audio("enemyLaser", "laserRetro_002.ogg");
         this.load.audio("death1", "spaceTrash4.ogg");
         this.load.audio("death2", "explosionCrunch_000.ogg");
         this.load.audio("engine1", "spaceEngineLow_002.ogg");
@@ -100,6 +102,7 @@ class GalleryShooter extends Phaser.Scene {
         // Creating objects of sounds from preload
         my.sounds = {};
         my.sounds.laser = this.sound.add("laser");
+        my.sounds.enemyLaser = this.sound.add("enemyLaser");
         my.sounds.death1 = this.sound.add("death1");
         my.sounds.death2 = this.sound.add("death2");
         my.sounds.engine1 = this.sound.add("engine1");
@@ -155,6 +158,10 @@ class GalleryShooter extends Phaser.Scene {
     }
 
     resetGameStateVariables() {
+
+        this.my.sounds.engine2.stop();
+        this.my.sounds.engine1.stop();
+
         this.my = {sprite: {}, text: {}};
 
         this.my.sprite.bullet = [];

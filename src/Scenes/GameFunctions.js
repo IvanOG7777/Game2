@@ -100,10 +100,14 @@ function updateBasicEnemies(scene, deltaTime) {
     let dt = deltaTime / 1000;
     let moveAmount = scene.enemySpeed * dt;
 
+    if (!scene.my.sounds.engine1.isPlaying) {
+        scene.my.sounds.engine1.play({volume: 0.3, loop: true});
+    }
+
     let touchedEdge = false;
     let level = levels[scene.currentWave - 1]; // get the current level
 
-    //Grap necesarcy score to boost speed from level
+    //Grab necesarcy score to boost speed from level
     let levelSpeedBoostScore = level.speedBoostScore;
 
     if (scene.speedUp == false) {
@@ -142,9 +146,12 @@ function updateBasicEnemies(scene, deltaTime) {
 function updatePathEnemies(scene, deltaTime) {
     scene.pathTimer += deltaTime;
 
+    if (!scene.my.sounds.engine2.isPlaying) {
+        scene.my.sounds.engine2.play({volume: 0.3, loop: true});
+    }
+
     if (scene.pathEnemiesSpawned < scene.pathSpawnLimit && scene.pathTimer >= scene.pathSpawnDelay) {
         let enemy = scene.add.follower(scene.curve, 10, 10, "enemyShip");
-        enemy.canShoot = scene.pathEnemiesSpawned % 5 == 0;
         enemy.visible = true;
         enemy.x = scene.curve.points[0].x;
         enemy.y = scene.curve.points[0].y;
@@ -167,6 +174,7 @@ function updatePathEnemies(scene, deltaTime) {
 
 function enemyShoot(scene, deltaTime) {
     scene.enemyShootTimer += deltaTime;
+    let playSound = false;
 
     if (scene.enemyShootTimer < scene.enemyShootDelay) {
         return;
@@ -177,6 +185,11 @@ function enemyShoot(scene, deltaTime) {
             let bullet = scene.add.sprite(enemy.x, enemy.y + 20, "spaceParts", "laserBlue01.png");
             bullet.setFlipY(true);
             scene.enemyBullets.push(bullet);
+
+            if (!playSound) {
+                scene.my.sounds.enemyLaser.play();
+                playSound = true;
+            }
         }
     }
 
