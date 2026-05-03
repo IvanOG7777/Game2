@@ -7,7 +7,7 @@ const levels = [
         movement: "groupDown",
         startX: 100,
         startY: -240,
-        speedBoostScore: 200 
+        speedBoostScore: 200
     },
     {
         wave: 2,
@@ -17,7 +17,7 @@ const levels = [
         movement: "groupDown",
         startX: 100,
         startY: -450,
-        speedBoostScore: 520 
+        speedBoostScore: 520
     },
     {
         wave: 3,
@@ -28,7 +28,7 @@ const levels = [
         movement: "groupDown",
         startX: 100,
         startY: -550,
-        speedBoostScore: 1000 
+        speedBoostScore: 1000
     },
     {
         wave: 4,
