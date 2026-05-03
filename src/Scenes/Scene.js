@@ -75,6 +75,8 @@ class GalleryShooter extends Phaser.Scene {
         this.load.audio("engine2", "spaceEngineSmall_001.ogg");
         this.load.audio("gameMusic", "the_mountain-game-game-music-508018.mp3");
 
+        this.load.spritesheet("hearts", "lifebar_16x16.png", {frameWidth: 16, frameHeight: 16});
+
         //Images for death
         this.load.image("whitePuff00", "whitePuff00.png");
         this.load.image("whitePuff01", "whitePuff01.png");
@@ -93,6 +95,15 @@ class GalleryShooter extends Phaser.Scene {
         my.sprite.spaceShip = this.add.sprite(this.cockpitX, this.cockpitY, "spaceParts", "cockpitRed_4.png");
         let rightWing = my.sprite.rightWing = this.add.sprite(this.wingRightX, this.wingRightY, "spaceParts", "wingRed_4.png");
         let leftWing = my.sprite.leftWing = this.add.sprite(this.wingLeftX, this.wingLeftY, "spaceParts", "wingRed_4.png");
+
+        this.my.sprite.hearts = [];
+        
+        for (let i = 0; i < this.playerHealth; i++) {
+            //positioning of hearts        x          y
+            let heart = this.add.sprite(30 + i * 60, 50, "hearts", 0);
+            heart.setScale(3);
+            this.my.sprite.hearts.push(heart);
+        }
 
         // Assets changes
         rightWing.flipX = true;
@@ -169,6 +180,7 @@ class GalleryShooter extends Phaser.Scene {
         this.enemies = [];
 
         this.playerScore = 0;
+        this.playerHealth = 3;
         this.currentWave = 1;
         this.playerAlive = true;
 

@@ -173,13 +173,18 @@ function updatePathEnemies(scene, deltaTime) {
 }
 
 function enemyShoot(scene, deltaTime) {
-    scene.enemyShootTimer += deltaTime;
-    let playSound = false;
 
+
+    scene.enemyShootTimer += deltaTime; // calculate timer for next shots
+    
+    let playSound = false; // flag to allow for only one play sound instead of many
+
+    // while timer is still less then delay keep returning
     if (scene.enemyShootTimer < scene.enemyShootDelay) {
         return;
     }
 
+    // loop through enemies
     for (let enemy of scene.enemies) {
         if (enemy.canShoot == true && enemy.active) {
             let bullet = scene.add.sprite(enemy.x, enemy.y + 20, "spaceParts", "laserBlue01.png");
@@ -197,42 +202,60 @@ function enemyShoot(scene, deltaTime) {
 }
 
 function enemyOnPlayerCollision(scene) {
-    for (let enemy of scene.enemies) {
-        if (scene.collides(scene.my.sprite.spaceShip, enemy)) {
-            scene.puff = scene.add.sprite(scene.my.sprite.spaceShip.x, scene.my.sprite.spaceShip.y, "whitePuff03").setScale(0.25).play("puff");
-            scene.playerAlive = false;
-            scene.my.sounds.death2.play({volume: 0.8});
+    if (scene.playerAlive == true) { // check if player is still alive
+        //loop through each enemy bullet in scene
+        for (let enemy of scene.enemies) {
+            if (scene.collides(scene.my.sprite.spaceShip, enemy)) {
+                scene.puff = scene.add.sprite(scene.my.sprite.spaceShip.x, scene.my.sprite.spaceShip.y, "whitePuff03").setScale(0.25).play("puff");
+                
+                scene.playerHealth--;
+                scene.my.sprite.hearts[scene.playerHealth].setFrame(3);  // change heart in array to black heart
 
-            scene.my.sprite.spaceShip.visible = false;
-            scene.my.sprite.leftWing.visible = false;
-            scene.my.sprite.rightWing.visible = false;
+                // when player dies do this
+                if (scene.playerHealth <= 0) {
+                    scene.playerAlive = false;
+                    scene.my.sounds.death2.play({volume: 0.8});
 
-            scene.checkPlayerStatus(scene.playerAlive);
-            let text = scene.add.text(scene.game.config.width / 2, scene.game.config.height / 2, "GAME OVER died to enemy collision", {
-                fontSize: "48px",
-                fill: "#ff0000"
-            });
-            text.setOrigin(0.5);
+                    scene.my.sprite.spaceShip.visible = false;
+                    scene.my.sprite.leftWing.visible = false;
+                    scene.my.sprite.rightWing.visible = false;
+
+                    scene.checkPlayerStatus(scene.playerAlive);
+                    let text = scene.add.text(scene.game.config.width / 2, scene.game.config.height / 2, "GAME OVER died to enemy collision", {
+                        fontSize: "48px",
+                        fill: "#ff0000"
+                    });
+                    text.setOrigin(0.5);
+                }   
+            }
         }
     }
 }
 
 function bulletOnPlayerCollision(scene) {
-    for (let bullet of scene.enemyBullets) {
-        if (scene.collides(scene.my.sprite.spaceShip, bullet)) {
-            bullet.destroy();
-            bullet.isDead = true;
+    if (scene.playerAlive == true) {// check if player is still alive
+        //loop through each enemy bullet in scene
+        for (let bullet of scene.enemyBullets) {
+            if (scene.collides(scene.my.sprite.spaceShip, bullet)) { // check collision
+                bullet.destroy();
+                bullet.isDead = true;
+                scene.puff = scene.add.sprite(scene.my.sprite.spaceShip.x, scene.my.sprite.spaceShip.y, "whitePuff03").setScale(0.25).play("puff");
 
-            scene.puff = scene.add.sprite(scene.my.sprite.spaceShip.x, scene.my.sprite.spaceShip.y, "whitePuff03").setScale(0.25).play("puff");
+                scene.playerHealth--;
+                scene.my.sprite.hearts[scene.playerHealth].setFrame(3); // change heart in array to black heart
+                
+                // When player dies do this
+                if (scene.playerHealth <= 0) {
+                    scene.playerAlive = false;
+                    scene.my.sounds.death1.play({volume: 1.0});
 
-            scene.playerAlive = false;
-            scene.my.sounds.death1.play({volume: 1.0});
+                    scene.my.sprite.spaceShip.visible = false;
+                    scene.my.sprite.leftWing.visible = false;
+                    scene.my.sprite.rightWing.visible = false;
 
-            scene.my.sprite.spaceShip.visible = false;
-            scene.my.sprite.leftWing.visible = false;
-            scene.my.sprite.rightWing.visible = false;
-
-            scene.add.text(250, 450, "GAME OVER died to laser", {fontSize: "48px", fill: "#ff0000"});
+                    scene.add.text(250, 450, "GAME OVER died to laser", {fontSize: "48px", fill: "#ff0000"});
+                }
+            }
         }
     }
 }
