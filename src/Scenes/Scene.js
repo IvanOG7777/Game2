@@ -26,6 +26,8 @@ class GalleryShooter extends Phaser.Scene {
         this.maxBullets = 5;
         this.playerScore = 0;
         this.playerHealth = 3;
+        this.hitDelay = 3000;
+        this.lastHit = 0;
 
         this.enemyBullets = [];
         this.enemyShootTimer = 0;
@@ -64,6 +66,7 @@ class GalleryShooter extends Phaser.Scene {
         this.load.setPath("./assets/"); // loading assets
 
         this.load.atlasXML("spaceParts", "sheet.png", "sheet.xml"); // loading xml sheets
+        this.load.atlasXML("alienParts", "spritesheet_spaceships.png", "spritesheet_spaceships.xml"); // alien sheets
         this.load.image("enemyShip", "enemyGreen1.png");       // spaceship that runs along the path
 
         // loading necessary audios
@@ -146,7 +149,7 @@ class GalleryShooter extends Phaser.Scene {
             this.points = paths[movementName];
             this.curve = new Phaser.Curves.Spline(this.points);
 
-            my.sprite.enemyShip = this.add.follower(this.curve, 10, 10, "enemyShip"); // add a new follower to curve
+            my.sprite.enemyShip = this.add.follower(this.curve, 10, 10, "alienParts", "shipYellow_manned.png"); // add a new follower to curve
             my.sprite.enemyShip.visible = false; // keep hidden
         }
 
@@ -278,10 +281,21 @@ class GalleryShooter extends Phaser.Scene {
 
             // move bullet along y-axis
             for (let bullet of my.sprite.bullet) {
+                if (bullet.y <= 0) {
+                    bullet.destroy();
+                    console.log("Bullet went off map at: ", bullet.y);
+                    bullet.isDead = true;
+                    continue;
+                }
                 bullet.y -= moveAmount;
             }
 
-            my.sprite.bullet = my.sprite.bullet.filter((bullet) => bullet.y > -(bullet.displayHeight / 2));
+            my.sprite.bullet = my.sprite.bullet.filter((bullet) => {
+                if (bullet.isDead) {
+                    return false
+                }
+                return bullet.y > -(bullet.displayHeight / 2)
+            });
 
             let level = levels[this.currentWave - 1];
             if (level.movement == "groupDown") {

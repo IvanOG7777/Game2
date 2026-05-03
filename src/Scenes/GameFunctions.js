@@ -3,25 +3,37 @@ import paths from "./Paths.js";
 
 
 function spawnEnemies(scene, movement, passedRows, passedCols, passedStartX, passedStartY) {
+    
+    // create local referneces of passed variables. I think i can just pass without, but i like it like this
     let ROWS = passedRows;
     let COLS = passedCols;
     let startX = passedStartX;
     let startY = passedStartY;
+
+    // Spacing per enemy
     let spacingX = 120;
     let spacingY = 100;
 
+    // Loop trough ros an cols which are given through Levels.js
     for (let row = 0; row < ROWS; row++) {
         for (let col = 0; col < COLS; col++) {
+
+            //calculate correct x,y coord for enemy ship
             let x = startX + (col * spacingX);
             let y = startY + (row * spacingY);
 
-            let ship = scene.add.sprite(x, y, "enemyShip");
+            let ship = scene.add.sprite(x, y, "alienParts", "shipPink_manned.png").setScale(0.7); // add ship
+
+            // index to calculate which enemy can shoot
             let index = row * COLS * 1.5;
 
-            if (movement == "groupDown") {
-                ship.canShoot = index % 2 == 0;
+
+            // All types of movements that can the group of enemies
+            if (movement == "groupDown" || movement == "zigzagANDGroup" || movement == "zagzigANDGroup") {
+                ship.canShoot = index % 2 == 0; // select index mod 2 ship to allow to shoot
             }
 
+            // Give correct coordinates and push into array of enemies
             ship.x = x;
             ship.y = y;
             scene.enemies.push(ship);
@@ -29,8 +41,10 @@ function spawnEnemies(scene, movement, passedRows, passedCols, passedStartX, pas
     }
 }
 
+
 function startWave(scene, waveNumber) {
 
+    // If wave number is greated then the levels we win
     if (waveNumber > levels.length) {
         scene.add.text(250, 450, "YOU WIN", {
             fontSize: "48px",
@@ -39,32 +53,34 @@ function startWave(scene, waveNumber) {
         return;
     }
 
+    // pass wave number to class wave
     scene.currentWave = waveNumber;
 
+    // grap current level form levels array
     let level = levels[scene.currentWave - 1];
 
-    for (let bullet of scene.my.sprite.bullet) {
-        bullet.destroy();
-    }
-
-    scene.my.sprite.bullet = [];
-
+    // reset enemy direction
     scene.enemyDirection = 1;
 
+    // spawner for group movement
     if (level.movement == "groupDown") {
         spawnEnemies(scene, level.movement, level.rows, level.cols, level.startX, level.startY);
     }
 
+
+    // spawner for zigzag movements
     if (level.movement == "zigzag" || level.movement == "zagzig") {
-        scene.pathEnemiesSpawned = 0;
-        scene.pathSpawnLimit = level.enemyCount;
-        scene.pathSpawnDelay = 1000;
+
+        scene.pathEnemiesSpawned = 0; // reset spawn counter
+        scene.pathSpawnLimit = level.enemyCount; // get allowed of zigzag enemies to spawn
+        scene.pathSpawnDelay = 1000; // spawn delay per spawn
         scene.pathTimer = 0;
 
-        scene.points = paths[level.movement];
-        scene.curve = new Phaser.Curves.Spline(scene.points);
+        scene.points = paths[level.movement]; // set points from path.js
+        scene.curve = new Phaser.Curves.Spline(scene.points); // give phaser the points to plot
     }
 
+    // Use a mix of both above
     if (level.movement == "zigzagANDGroup" || level.movement == "zagzigANDGroup") {
         spawnEnemies(scene, level.movement, level.rows, level.cols, level.startX, level.startY);
 
@@ -100,6 +116,8 @@ function updateBasicEnemies(scene, deltaTime) {
     let dt = deltaTime / 1000;
     let moveAmount = scene.enemySpeed * dt;
 
+
+    // play only one instance of engine1 so not all n amount are playing
     if (!scene.my.sounds.engine1.isPlaying) {
         scene.my.sounds.engine1.play({volume: 0.3, loop: true});
     }
@@ -146,15 +164,18 @@ function updateBasicEnemies(scene, deltaTime) {
 function updatePathEnemies(scene, deltaTime) {
     scene.pathTimer += deltaTime;
 
+    // play only one instance of engine1 so not all n amount are playing
     if (!scene.my.sounds.engine2.isPlaying) {
         scene.my.sounds.engine2.play({volume: 0.3, loop: true});
     }
 
+    // check if spawned is less than limit and if we have to correct time to spawn
     if (scene.pathEnemiesSpawned < scene.pathSpawnLimit && scene.pathTimer >= scene.pathSpawnDelay) {
-        let enemy = scene.add.follower(scene.curve, 10, 10, "enemyShip");
+        let enemy = scene.add.follower(scene.curve, 10, 10, "alienParts", "shipYellow_manned.png").setScale(0.6); // add a follower to path
         enemy.visible = true;
         enemy.x = scene.curve.points[0].x;
         enemy.y = scene.curve.points[0].y;
+        // start the follow
         enemy.startFollow({
             from: 0,
             to: 1,
@@ -166,6 +187,7 @@ function updatePathEnemies(scene, deltaTime) {
             rotateToPath: true,
             rotationOffset: -90
         });
+        // add to array of enemies
         scene.enemies.push(enemy);
         scene.pathEnemiesSpawned++;
         scene.pathTimer = 0;
@@ -206,6 +228,14 @@ function enemyOnPlayerCollision(scene) {
         //loop through each enemy bullet in scene
         for (let enemy of scene.enemies) {
             if (scene.collides(scene.my.sprite.spaceShip, enemy)) {
+
+
+                if (scene.time.now - scene.lastHitTime < scene.hitDelay) {
+                    return;
+                }
+
+                scene.lastHitTime = scene.time.now;
+
                 scene.puff = scene.add.sprite(scene.my.sprite.spaceShip.x, scene.my.sprite.spaceShip.y, "whitePuff03").setScale(0.25).play("puff");
                 
                 scene.playerHealth--;
@@ -237,6 +267,13 @@ function bulletOnPlayerCollision(scene) {
         //loop through each enemy bullet in scene
         for (let bullet of scene.enemyBullets) {
             if (scene.collides(scene.my.sprite.spaceShip, bullet)) { // check collision
+
+                if (scene.time.now - scene.lastHitTime < scene.hitDelay) {
+                    return;
+                }
+
+                scene.lastHitTime = scene.time.now;
+
                 bullet.destroy();
                 bullet.isDead = true;
                 scene.puff = scene.add.sprite(scene.my.sprite.spaceShip.x, scene.my.sprite.spaceShip.y, "whitePuff03").setScale(0.25).play("puff");
@@ -265,8 +302,9 @@ function bulletOnEnemyCollision(scene) {
     for (let bullet of scene.my.sprite.bullet) { // loop through bullets
         for (let enemy of scene.enemies) { // loop through enemies
             if (scene.collides(enemy, bullet)) { // check if they collide
+
                 scene.puff = scene.add.sprite(enemy.x, enemy.y, "whitePuff03").setScale(0.25).play("puff");
-                bullet.y = -100;
+                bullet.y = -1000;
 
                 enemy.destroy();
                 enemy.isDead = true;

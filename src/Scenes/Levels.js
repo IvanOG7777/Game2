@@ -35,7 +35,7 @@ const levels = [
         scoreNeeded: 1500,
         enemyCount: 15,
         movement: "zigzagANDGroup",
-        rows: 6,
+        rows: 7,
         cols: 5,
         startX: 100,
         startY: -550,
