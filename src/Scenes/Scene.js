@@ -8,7 +8,7 @@ import {
     enemyShoot,
     enemyOnPlayerCollision,
     bulletOnPlayerCollision,
-    bulletOnEnemyCollision
+    bulletOnEnemyCollision,enemyBulletUpdate
 } from "./GameFunctions.js";
 
 class GalleryShooter extends Phaser.Scene {
@@ -30,6 +30,7 @@ class GalleryShooter extends Phaser.Scene {
 
         this.enemyBullets = [];
         this.enemyShootTimer = 0;
+        this.bossShootDelay = 3000;
         this.enemyShootDelay = 4500;
         this.enemyBulletSpeed = 300;
         this.bossDead = false;
@@ -157,7 +158,7 @@ class GalleryShooter extends Phaser.Scene {
         }
 
 
-        startWave(this, 6);
+        startWave(this, 1);
 
         this.anims.create({
             key: "puff",
@@ -317,20 +318,7 @@ class GalleryShooter extends Phaser.Scene {
 
             enemyShoot(this, deltaTime);
 
-            let enemyMoveAmount = this.enemyBulletSpeed * dt;
-
-            for (let bullet of this.enemyBullets) {
-                bullet.y += enemyMoveAmount;
-            }
-
-            this.enemyBullets = this.enemyBullets.filter((bullet) => {
-                if (bullet.y < this.game.config.height + bullet.displayHeight) {
-                    return true;
-                }
-
-                bullet.destroy();
-                return false;
-            });
+            enemyBulletUpdate(this, dt);
 
             bulletOnEnemyCollision(this);
 

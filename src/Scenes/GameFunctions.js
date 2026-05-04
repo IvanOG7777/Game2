@@ -53,8 +53,29 @@ function startWave(scene, waveNumber) {
         return;
     }
 
+    scene.waveText = null;
+
+    if (!scene.waveText) {
+        scene.waveText = scene.add.text(
+        scene.game.config.width / 2, 600, `WAVE ${waveNumber}`, {
+            fontSize: "50px",
+            fill: "#00fd22"
+        }).setOrigin(0.5);
+    }
+
+    //Chat
+    scene.time.delayedCall(2000, () => {
+        if (scene.waveText) {
+            scene.waveText.destroy();
+            scene.waveText = null;
+        }
+    });
+    //End of chat
+
     // pass wave number to class wave
     scene.currentWave = waveNumber;
+
+    console.log("Starting wave: ", scene.currentWave);
 
     // grap current level form levels array
     let level = levels[scene.currentWave - 1];
@@ -181,32 +202,60 @@ function updatePathEnemies(scene, deltaTime) {
 
     // check if spawned is less than limit and if we have to correct time to spawn
     if (scene.pathEnemiesSpawned < scene.pathSpawnLimit && scene.pathTimer >= scene.pathSpawnDelay) {
-        let enemy = scene.add.follower(scene.curve, 10, 10, "alienParts", "shipYellow_manned.png").setScale(0.6); // add a follower to path
-        enemy.visible = true;
-        enemy.x = scene.curve.points[0].x;
-        enemy.y = scene.curve.points[0].y;
-        // start the follow
-        enemy.startFollow({
-            from: 0,
-            to: 1,
-            delay: 0,
-            duration: 7000 - (scene.currentWave * 500),
-            ease: 'Sine.easeInOut',
-            repeat: -1,
-            yoyo: true,
-            rotateToPath: true,
-            rotationOffset: -90
+        let level = levels[scene.currentWave - 1];
+        
+        if (level.movement == "boss") {
+            let bossEnemy = scene.add.follower(scene.curve, 10, 10, "alienParts", "shipBlue_manned.png").setScale(0.6); // add a follower to path
+            bossEnemy.isBoss = true;
+            bossEnemy.health = level.bossHealth;
+            bossEnemy.canShoot = true;
+
+            bossEnemy.visible = true;
+            bossEnemy.x = scene.curve.points[0].x;
+            bossEnemy.y = scene.curve.points[0].y;
+            // start the follow
+            bossEnemy.startFollow({
+                from: 0,
+                to: 1,
+                delay: 0,
+                duration: 7000 - (scene.currentWave * 500),
+                ease: 'Sine.easeInOut',
+                repeat: -1,
+                yoyo: true,
+                rotateToPath: true,
+                rotationOffset: -90
         });
         // add to array of enemies
-        scene.enemies.push(enemy);
+        scene.enemies.push(bossEnemy);
         scene.pathEnemiesSpawned++;
         scene.pathTimer = 0;
+    } else {
+            
+            let enemy = scene.add.follower(scene.curve, 10, 10, "alienParts", "shipYellow_manned.png").setScale(0.6); // add a follower to path
+            enemy.visible = true;
+            enemy.x = scene.curve.points[0].x;
+            enemy.y = scene.curve.points[0].y;
+            // start the follow
+            enemy.startFollow({
+                from: 0,
+                to: 1,
+                delay: 0,
+                duration: 7000 - (scene.currentWave * 500),
+                ease: 'Sine.easeInOut',
+                repeat: -1,
+                yoyo: true,
+                rotateToPath: true,
+                rotationOffset: -90
+            });
+            // add to array of enemies
+            scene.enemies.push(enemy);
+            scene.pathEnemiesSpawned++;
+            scene.pathTimer = 0;
+        }
     }
 }
 
 function enemyShoot(scene, deltaTime) {
-
-
     scene.enemyShootTimer += deltaTime; // calculate timer for next shots
     
     let playSound = false; // flag to allow for only one play sound instead of many
@@ -218,6 +267,14 @@ function enemyShoot(scene, deltaTime) {
 
     // loop through enemies
     for (let enemy of scene.enemies) {
+
+        if (enemy.isBoss) {
+            let bullet = scene.add.sprite(enemy.x, enemy.y + 20, "spaceParts", "laserBlue01.png");
+            bullet.isBossBullet = true;
+            bullet.setFlipY(true);
+            scene.enemyBullets.push(bullet);
+        }
+
         if (enemy.canShoot == true && enemy.active) {
             let bullet = scene.add.sprite(enemy.x, enemy.y + 20, "spaceParts", "laserBlue01.png");
             bullet.setFlipY(true);
@@ -321,8 +378,10 @@ function bulletOnEnemyCollision(scene) {
             if (scene.collides(enemy, bullet)) { // check if they collide
 
                 if (enemy.isBoss == true) {
-                    enemy.heath--;
+                    enemy.health--;
                     scene.puff = scene.add.sprite(enemy.x, enemy.y, "whitePuff03").setScale(0.25).play("puff");
+                    bullet.y = -1000;
+                    bullet.isDead = true;
 
                     if (enemy.health <= 0) {
                         scene.puff = scene.add.sprite(enemy.x, enemy.y, "whitePuff03").setScale(0.25).play("puff");
@@ -336,7 +395,7 @@ function bulletOnEnemyCollision(scene) {
 
                         scene.my.sounds.death2.play({volume: 0.8});
                     }
-                    continue;
+                    break;
                 }
 
                 scene.puff = scene.add.sprite(enemy.x, enemy.y, "whitePuff03").setScale(0.25).play("puff");
@@ -354,6 +413,24 @@ function bulletOnEnemyCollision(scene) {
     }
 }
 
+function enemyBulletUpdate(scene, smallDeltaTime) {
+
+    let enemyBulletMoveAmount = scene.enemyBulletSpeed * smallDeltaTime;
+
+    for (let bullet of scene.enemyBullets) {
+        bullet.y += enemyBulletMoveAmount;
+    }
+    
+    scene.enemyBullets = scene.enemyBullets.filter((bullet) => {
+        if (bullet.y < scene.game.config.height + bullet.displayHeight) {
+            return true;
+        }
+        
+        bullet.destroy();
+        return false;
+    });
+}
+
 
 export {
     spawnEnemies,
@@ -364,5 +441,6 @@ export {
     enemyShoot,
     enemyOnPlayerCollision,
     bulletOnPlayerCollision,
-    bulletOnEnemyCollision
+    bulletOnEnemyCollision,
+    enemyBulletUpdate
 };
