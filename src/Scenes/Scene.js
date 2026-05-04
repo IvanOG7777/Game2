@@ -18,14 +18,13 @@ class GalleryShooter extends Phaser.Scene {
 
     constructor() {
         super("Main Scene")
-        console.log("Constructor");
 
         this.my = {sprite: {}, text: {}};
 
         this.my.sprite.bullet = [];
-        this.maxBullets = 5;
+        this.maxBullets = 6;
         this.playerScore = 0;
-        this.playerHealth = 3;
+        this.playerHealth = 10;
         this.hitDelay = 3000;
         this.lastHit = 0;
 
@@ -67,7 +66,6 @@ class GalleryShooter extends Phaser.Scene {
 
         this.load.atlasXML("spaceParts", "sheet.png", "sheet.xml"); // loading xml sheets
         this.load.atlasXML("alienParts", "spritesheet_spaceships.png", "spritesheet_spaceships.xml"); // alien sheets
-        this.load.image("enemyShip", "enemyGreen1.png");       // spaceship that runs along the path
 
         // loading necessary audios
         this.load.audio("laser", "laser5.ogg");
@@ -77,6 +75,9 @@ class GalleryShooter extends Phaser.Scene {
         this.load.audio("engine1", "spaceEngineLow_002.ogg");
         this.load.audio("engine2", "spaceEngineSmall_001.ogg");
         this.load.audio("gameMusic", "the_mountain-game-game-music-508018.mp3");
+        this.load.audio("deathMusic", "freesound_community-080047_lose_funny_retro_video-game-80925.mp3");
+        this.load.audio("playerHit", "explosionCrunch_004.ogg");
+    
 
         this.load.spritesheet("hearts", "lifebar_16x16.png", {frameWidth: 16, frameHeight: 16});
 
@@ -122,6 +123,8 @@ class GalleryShooter extends Phaser.Scene {
         my.sounds.engine1 = this.sound.add("engine1");
         my.sounds.engine2 = this.sound.add("engine2");
         my.sounds.music = this.sound.add("gameMusic");
+        my.sounds.deathMusic = this.sound.add("deathMusic");
+        my.sounds.playerHit = this.sound.add("playerHit");
 
         // Resetting then playing sound
         my.sounds.music.stop();
@@ -154,7 +157,7 @@ class GalleryShooter extends Phaser.Scene {
         }
 
 
-        startWave(this, 1);
+        startWave(this, 6);
 
         this.anims.create({
             key: "puff",
@@ -307,7 +310,7 @@ class GalleryShooter extends Phaser.Scene {
                 updatePathEnemies(this, deltaTime);
             }
 
-            if (level.movement == "zigzagANDGroup" || level.movement == "zagzigANDGroup") {
+            if (level.movement == "zigzagANDGroup" || level.movement == "zagzigANDGroup" || level.movement == "boss") {
                 updateBasicEnemies(this, deltaTime);
                 updatePathEnemies(this, deltaTime);
             }
@@ -345,7 +348,7 @@ class GalleryShooter extends Phaser.Scene {
 
         this.checkPlayerStatus(this.playerAlive);
 
-        if (this.playerAlive == true && (this.boss == false || this.enemies.length == 0)) {
+        if (this.playerAlive == true && this.enemies.length == 0) {
             if (!this.winText) {
                 this.resetText = this.add.text(
                     this.game.config.width / 2, 600, "YOU WIN!!!!", {fontSize: "48px", fill: "#00fd22"}).setOrigin(0.5);

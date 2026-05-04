@@ -93,6 +93,16 @@ function startWave(scene, waveNumber) {
         scene.curve = new Phaser.Curves.Spline(scene.points);
     }
 
+    if (level.movement == "boss") {
+        scene.pathEnemiesSpawned = 0; // reset spawn counter
+        scene.pathSpawnLimit = level.enemyCount; // get allowed of zigzag enemies to spawn
+        scene.pathSpawnDelay = 1000; // spawn delay per spawn
+        scene.pathTimer = 0;
+
+        scene.points = paths[level.movement]; // set points from path.js
+        scene.curve = new Phaser.Curves.Spline(scene.points); // give phaser the points to plot
+    }
+
     scene.enemySize = scene.enemies.length;
 }
 
@@ -235,8 +245,8 @@ function enemyOnPlayerCollision(scene) {
                 }
 
                 scene.lastHitTime = scene.time.now;
-
                 scene.puff = scene.add.sprite(scene.my.sprite.spaceShip.x, scene.my.sprite.spaceShip.y, "whitePuff03").setScale(0.25).play("puff");
+                scene.my.sounds.playerHit.play({volume: 2});
                 
                 scene.playerHealth--;
                 scene.my.sprite.hearts[scene.playerHealth].setFrame(3);  // change heart in array to black heart
@@ -244,7 +254,10 @@ function enemyOnPlayerCollision(scene) {
                 // when player dies do this
                 if (scene.playerHealth <= 0) {
                     scene.playerAlive = false;
+                    scene.my.sounds.music.stop();
+                    scene.my.sounds.engine1.stop();
                     scene.my.sounds.death2.play({volume: 0.8});
+                    scene.my.sounds.deathMusic.play();
 
                     scene.my.sprite.spaceShip.visible = false;
                     scene.my.sprite.leftWing.visible = false;
@@ -276,6 +289,7 @@ function bulletOnPlayerCollision(scene) {
 
                 bullet.destroy();
                 bullet.isDead = true;
+                scene.my.sounds.playerHit.play({volume: 2});
                 scene.puff = scene.add.sprite(scene.my.sprite.spaceShip.x, scene.my.sprite.spaceShip.y, "whitePuff03").setScale(0.25).play("puff");
 
                 scene.playerHealth--;
@@ -284,7 +298,10 @@ function bulletOnPlayerCollision(scene) {
                 // When player dies do this
                 if (scene.playerHealth <= 0) {
                     scene.playerAlive = false;
+                    scene.my.sounds.music.stop();
+                    scene.my.sounds.engine1.stop();
                     scene.my.sounds.death1.play({volume: 1.0});
+                    scene.my.sounds.deathMusic.play();
 
                     scene.my.sprite.spaceShip.visible = false;
                     scene.my.sprite.leftWing.visible = false;
@@ -302,6 +319,25 @@ function bulletOnEnemyCollision(scene) {
     for (let bullet of scene.my.sprite.bullet) { // loop through bullets
         for (let enemy of scene.enemies) { // loop through enemies
             if (scene.collides(enemy, bullet)) { // check if they collide
+
+                if (enemy.isBoss == true) {
+                    enemy.heath--;
+                    scene.puff = scene.add.sprite(enemy.x, enemy.y, "whitePuff03").setScale(0.25).play("puff");
+
+                    if (enemy.health <= 0) {
+                        scene.puff = scene.add.sprite(enemy.x, enemy.y, "whitePuff03").setScale(0.25).play("puff");
+                        bullet.y = -1000;
+
+                        enemy.destroy();
+                        enemy.isDead = true;
+
+                        scene.playerScore += 25;
+                        scene.updateScore();
+
+                        scene.my.sounds.death2.play({volume: 0.8});
+                    }
+                    continue;
+                }
 
                 scene.puff = scene.add.sprite(enemy.x, enemy.y, "whitePuff03").setScale(0.25).play("puff");
                 bullet.y = -1000;
