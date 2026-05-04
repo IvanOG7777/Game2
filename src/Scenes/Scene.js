@@ -78,6 +78,7 @@ class GalleryShooter extends Phaser.Scene {
         this.load.audio("gameMusic", "the_mountain-game-game-music-508018.mp3");
         this.load.audio("deathMusic", "freesound_community-080047_lose_funny_retro_video-game-80925.mp3");
         this.load.audio("playerHit", "explosionCrunch_004.ogg");
+        this.load.audio("winSound", "floraphonic-you-win-sequence-2-183949.mp3");
     
 
         this.load.spritesheet("hearts", "lifebar_16x16.png", {frameWidth: 16, frameHeight: 16});
@@ -126,6 +127,7 @@ class GalleryShooter extends Phaser.Scene {
         my.sounds.music = this.sound.add("gameMusic");
         my.sounds.deathMusic = this.sound.add("deathMusic");
         my.sounds.playerHit = this.sound.add("playerHit");
+        my.sounds.winSound = this.sound.add("winSound");
 
         // Resetting then playing sound
         my.sounds.music.stop();
@@ -337,10 +339,6 @@ class GalleryShooter extends Phaser.Scene {
         this.checkPlayerStatus(this.playerAlive);
 
         if (this.playerAlive == true && this.enemies.length == 0) {
-            if (!this.winText) {
-                this.resetText = this.add.text(
-                    this.game.config.width / 2, 600, "YOU WIN!!!!", {fontSize: "48px", fill: "#00fd22"}).setOrigin(0.5);
-            }
 
             if (!this.resetText) {
                 this.resetText = this.add.text(

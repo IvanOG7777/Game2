@@ -50,10 +50,13 @@ function startWave(scene, waveNumber) {
             fontSize: "48px",
             fill: "#fcfcfc"
         });
+
+        scene.my.sounds.engine1.stop();
+        scene.my.sounds.engine2.stop();
+        scene.my.sounds.music.stop();
+        scene.my.sounds.winSound.play();
         return;
     }
-
-    scene.waveText = null;
 
     if (!scene.waveText) {
         scene.waveText = scene.add.text(
@@ -63,7 +66,7 @@ function startWave(scene, waveNumber) {
         }).setOrigin(0.5);
     }
 
-    //Chat
+    //Chatgpt
     scene.time.delayedCall(2000, () => {
         if (scene.waveText) {
             scene.waveText.destroy();
