@@ -22,21 +22,22 @@ class GalleryShooter extends Phaser.Scene {
         this.my = {sprite: {}, text: {}};
 
         this.my.sprite.bullet = [];
-        this.maxBullets = 100;
+        this.maxBullets = 7;
         this.playerScore = 0;
-        this.playerHealth = 10;
+        this.playerHealth = 5;
         this.gameWon = false;
-        this.hitDelay = 3000;
+        this.hitDelay = 3500;
         this.lastHit = 0;
 
         this.infiniteMode = false;
+        this.highScore = 0;
 
         this.enemyBullets = [];
         this.enemyShootTimer = 0;
         this.bossShootTimer = 0;
-        this.bossShootDelay = 800;
+        this.bossShootDelay = 600;
         this.enemyShootDelay = 3500;
-        this.enemyBulletSpeed = 300;
+        this.enemyBulletSpeed = 350;
         this.bossDead = false;
         this.gameEnd = false;
 
@@ -98,9 +99,23 @@ class GalleryShooter extends Phaser.Scene {
         this.load.bitmapFont("rocketSquare", "KennyRocketSquare_0.png", "KennyRocketSquare.fnt");
     }
 
+    init(data) {
+        this.infiniteMode = data.infiniteMode || false;
+    }
+
     create() {
 
         let my = this.my;
+
+        
+        this.highScore = Number(localStorage.getItem("highScore")) || 0;
+
+        my.text.highScore = this.add.bitmapText(
+            450,
+            60,
+            "rocketSquare",
+            "High " + this.highScore
+        );
 
         // Assets for spaceship
         my.sprite.spaceShip = this.add.sprite(this.cockpitX, this.cockpitY, "spaceParts", "cockpitRed_4.png");
@@ -181,6 +196,7 @@ class GalleryShooter extends Phaser.Scene {
         });
     }
 
+    //Reseting game variables
     resetGameStateVariables() {
 
         this.my.sounds.engine2.stop();
@@ -193,7 +209,7 @@ class GalleryShooter extends Phaser.Scene {
         this.enemies = [];
 
         this.playerScore = 0;
-        this.playerHealth = 3;
+        this.playerHealth = 5;
         this.currentWave = 1;
         this.playerAlive = true;
 
@@ -206,9 +222,15 @@ class GalleryShooter extends Phaser.Scene {
         this.enemyDirection = 1;
         this.enemySpeed = 150;
 
+        this.gameWon = false;
+        this.gameEnd = false;
+        this.bossShootTimer = 0;
+        
+        this.gameWonText = null;
         this.resetText = null;
     }
 
+    // function used to reset
     reset() {
         if (Phaser.Input.Keyboard.JustDown(this.rKey)) {
             if (this.my?.sounds?.music) {
@@ -219,8 +241,34 @@ class GalleryShooter extends Phaser.Scene {
         }
     }
 
+    // Checking player status and showing game win/lose texts
     checkPlayerStatus(playerStatus) {
-        if ((this.playerAlive == true && this.currentWave > levels.length && this.gameWon == true) || this.playerAlive == false) {
+        if (this.gameWon) {
+            if (!this.gameWonText) {
+                this.gameWonText = this.add.text (
+                    this.game.config.width / 2, 500,  "GAME WON", {
+                        fontSize: "48px",
+                        fill: "#00fd22"
+                    }).setOrigin(0.5);
+            }
+            if (!this.resetText) {
+                this.resetText = this.add.text(
+                    this.game.config.width / 2, 600, "RESET BY PRESSING R", {
+                        fontSize: "48px",
+                        fill: "#00fd22"
+                    }).setOrigin(0.5);
+            }
+            this.reset();
+        }
+
+        if (!this.playerAlive) {
+            if (!this.gameWonText) {
+                this.gameWonText = this.add.text (
+                    this.game.config.width / 2, 500,  "GAME OVER", {
+                        fontSize: "48px",
+                        fill: "#ff0000"
+                    }).setOrigin(0.5);
+            }
             if (!this.resetText) {
                 this.resetText = this.add.text(
                     this.game.config.width / 2, 600, "RESET BY PRESSING R", {
@@ -241,10 +289,16 @@ class GalleryShooter extends Phaser.Scene {
     updateScore() {
         let my = this.my;
         my.text.score.setText("Score " + this.playerScore);
+
+        if (this.playerScore > this.highScore) {
+            this.highScore = this.playerScore;
+            localStorage.setItem("highScore", this.highScore);
+            my.text.highScore.setText("High " + this.highScore);
+        }
     }
 
     update(time, deltaTime) {
-        if (this.playerAlive == true || this.gameEnd == false) {
+        if (this.playerAlive == true && !this.gameEnd) {
             let my = this.my;
 
             // Grab by reference
@@ -327,9 +381,9 @@ class GalleryShooter extends Phaser.Scene {
 
             bulletOnEnemyCollision(this);
 
-            bulletOnPlayerCollision(this);
-
             this.enemyBullets = this.enemyBullets.filter(bullet => !bullet.isDead);
+
+            bulletOnPlayerCollision(this);
 
             // enemy on player collision check
             enemyOnPlayerCollision(this);

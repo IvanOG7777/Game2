@@ -56,7 +56,7 @@ const levels = [
         wave: 6,
         scoreNeeded: 3800,
         movement: "boss",
-        enemyCount: 5,
+        enemyCount: 7,
         bossHealth: 10,
         speedBoostScore: 4000
     }

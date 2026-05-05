@@ -46,15 +46,12 @@ function startWave(scene, waveNumber) {
 
     // If wave number is greated then the levels we win
     if (waveNumber > levels.length) {
-        scene.add.text(250, 450, "YOU WIN", {
-            fontSize: "48px",
-            fill: "#fcfcfc"
-        });
-
         scene.my.sounds.engine1.stop();
         scene.my.sounds.engine2.stop();
         scene.my.sounds.music.stop();
         scene.my.sounds.winSound.play();
+        scene.gameWon = true;
+        scene.gameEnd = true;
         return;
     }
 
@@ -78,8 +75,6 @@ function startWave(scene, waveNumber) {
     // pass wave number to class wave
     scene.currentWave = waveNumber;
 
-    console.log("Starting wave: ", scene.currentWave);
-
     // grap current level form levels array
     let level = levels[scene.currentWave - 1];
 
@@ -88,6 +83,8 @@ function startWave(scene, waveNumber) {
 
     // spawner for group movement
     if (level.movement == "groupDown") {
+        scene.pathEnemiesSpawned = 0;
+        scene.pathSpawnLimit = 0;
         spawnEnemies(scene, level.movement, level.rows, level.cols, level.startX, level.startY);
     }
 
@@ -133,21 +130,34 @@ function startWave(scene, waveNumber) {
 function checkWave(scene) {
     let nextWave = scene.currentWave + 1; // get next wave
 
+    // ChatGPT
+    let aliveEnemies = scene.enemies.filter(enemy => !enemy.isDead && enemy.active);
+    // END OF CHAT
+
+    // Infinite mode
+    if (scene.infiniteMode) {
+        if (aliveEnemies.length == 0 && scene.pathEnemiesSpawned >= scene.pathSpawnLimit) {
+            // essentially restarting
+            if (nextWave > levels.length) {
+                nextWave = 1;
+            }
+
+            scene.speedUp = false;
+            startWave(scene, nextWave);
+        }
+    }
+    
+    //For default mode
     if (nextWave > levels.length) { // check if greater then level count
-        scene.gameWon = true;
+        if (aliveEnemies.length == 0 && scene.pathEnemiesSpawned >= scene.pathSpawnLimit) {
+            startWave(scene, nextWave);
+        }
+        return; 
     }
 
-    if (scene.gameWon == false) {
-
-        let nextLevel = levels[nextWave - 1]; // get next level
-
-        if (scene.playerScore >= nextLevel.scoreNeeded) { // check player score
-            startWave(scene, nextWave); // add next level
-        }
-    } else {
-        scene.gameEnd = true;
-        console.log("YOUWIN!!!!");
-        scene.checkPlayerStatus(scene.playerAlive);
+    let nextLevel = levels[nextWave - 1];
+    if (scene.playerScore >= nextLevel.scoreNeeded) {
+        startWave(scene, nextWave); // add next level
     }
 }
 
@@ -339,11 +349,6 @@ function enemyOnPlayerCollision(scene) {
                     scene.my.sprite.rightWing.visible = false;
 
                     scene.checkPlayerStatus(scene.playerAlive);
-                    let text = scene.add.text(scene.game.config.width / 2, scene.game.config.height / 2, "GAME OVER died to enemy collision", {
-                        fontSize: "48px",
-                        fill: "#ff0000"
-                    });
-                    text.setOrigin(0.5);
                 }   
             }
         }
@@ -381,8 +386,6 @@ function bulletOnPlayerCollision(scene) {
                     scene.my.sprite.spaceShip.visible = false;
                     scene.my.sprite.leftWing.visible = false;
                     scene.my.sprite.rightWing.visible = false;
-
-                    scene.add.text(250, 450, "GAME OVER died to laser", {fontSize: "48px", fill: "#ff0000"});
                 }
             }
         }
