@@ -297,7 +297,7 @@ class GalleryShooter extends Phaser.Scene {
         if (this.playerScore > this.highScore) {
             this.highScore = this.playerScore;
             localStorage.setItem("highScore", this.highScore);
-            my.text.highScore.setText("High " + this.highScore);
+            my.text.highScore.setText("High Score " + this.highScore);
         }
     }
 
