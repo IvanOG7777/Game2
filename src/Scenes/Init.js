@@ -9,9 +9,12 @@ class Init extends Phaser.Scene {
         this.load.setPath("./assets/"); // loading assets
         // loading score font
         this.load.bitmapFont("rocketSquare", "KennyRocketSquare_0.png", "KennyRocketSquare.fnt");
+        this.load.image("background", "405-0.png");
     }
 
     create() {
+
+        this.background = this.add.tileSprite(0,0, this.game.config.width,this.game.config.height, "background").setOrigin(0,0);
 
         this.my.text.initText = this.add.bitmapText(130, 100, "rocketSquare", "GALLERY SHOOTER", 40);
 
@@ -31,6 +34,9 @@ class Init extends Phaser.Scene {
     }
 
     update() {
+
+        this.background.tilePositionY -= 1;
+
         if (Phaser.Input.Keyboard.JustDown(this.space)) {
             this.scene.start("Main Scene", {infiniteMode: false});
         }

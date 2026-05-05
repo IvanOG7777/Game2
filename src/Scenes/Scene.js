@@ -35,7 +35,7 @@ class GalleryShooter extends Phaser.Scene {
         this.enemyBullets = [];
         this.enemyShootTimer = 0;
         this.bossShootTimer = 0;
-        this.bossShootDelay = 600;
+        this.bossShootDelay = 725;
         this.enemyShootDelay = 3500;
         this.enemyBulletSpeed = 350;
         this.bossDead = false;
@@ -89,6 +89,8 @@ class GalleryShooter extends Phaser.Scene {
 
         this.load.spritesheet("hearts", "lifebar_16x16.png", {frameWidth: 16, frameHeight: 16});
 
+        this.load.image("background", "405-0.png");
+
         //Images for death
         this.load.image("whitePuff00", "whitePuff00.png");
         this.load.image("whitePuff01", "whitePuff01.png");
@@ -107,14 +109,16 @@ class GalleryShooter extends Phaser.Scene {
 
         let my = this.my;
 
+        this.background = this.add.tileSprite(0,0, this.game.config.width,this.game.config.height, "background").setOrigin(0,0);
+
         
         this.highScore = Number(localStorage.getItem("highScore")) || 0;
 
         my.text.highScore = this.add.bitmapText(
-            450,
-            60,
+            300,
+            850,
             "rocketSquare",
-            "High " + this.highScore
+            "High Score " + this.highScore
         );
 
         // Assets for spaceship
@@ -299,6 +303,9 @@ class GalleryShooter extends Phaser.Scene {
 
     update(time, deltaTime) {
         if (this.playerAlive == true && !this.gameEnd) {
+
+            this.background.tilePositionY -= 1;
+
             let my = this.my;
 
             // Grab by reference

@@ -56,8 +56,10 @@ function startWave(scene, waveNumber) {
     }
 
     if (!scene.waveText) {
+
+        let waveTextLabel = scene.infiniteMode ? "NEXT WAVE" : `WAVE ${waveNumber}`;
         scene.waveText = scene.add.text(
-        scene.game.config.width / 2, 600, `WAVE ${waveNumber}`, {
+        scene.game.config.width / 2, 600, waveTextLabel, {
             fontSize: "50px",
             fill: "#00fd22"
         }).setOrigin(0.5);
@@ -103,8 +105,6 @@ function startWave(scene, waveNumber) {
 
     // Use a mix of both above
     if (level.movement == "zigzagANDGroup" || level.movement == "zagzigANDGroup") {
-        spawnEnemies(scene, level.movement, level.rows, level.cols, level.startX, level.startY);
-
         scene.pathEnemiesSpawned = 0;
         scene.pathSpawnLimit = level.enemyCount;
         scene.pathSpawnDelay = 1000;
@@ -112,6 +112,8 @@ function startWave(scene, waveNumber) {
 
         scene.points = paths[level.movement];
         scene.curve = new Phaser.Curves.Spline(scene.points);
+
+        spawnEnemies(scene, level.movement, level.rows, level.cols, level.startX, level.startY);
     }
 
     if (level.movement == "boss") {
@@ -137,14 +139,15 @@ function checkWave(scene) {
     // Infinite mode
     if (scene.infiniteMode) {
         if (aliveEnemies.length == 0 && scene.pathEnemiesSpawned >= scene.pathSpawnLimit) {
-            // essentially restarting
-            if (nextWave > levels.length) {
-                nextWave = 1;
-            }
 
+            let randomWave = Phaser.Math.Between(1, levels.length);
+            // essentially restarting
             scene.speedUp = false;
-            startWave(scene, nextWave);
+            scene.enemySpeed = 200;
+            scene.speedUp = false;
+            startWave(scene, randomWave);
         }
+        return;
     }
     
     //For default mode
@@ -181,7 +184,7 @@ function updateBasicEnemies(scene, deltaTime) {
 
     if (scene.speedUp == false) {
         if (scene.playerScore >= levelSpeedBoostScore) {
-            scene.enemySpeed *= 1.5;
+            scene.enemySpeed *= 1.2;
             scene.speedUp = true;
         }
     }

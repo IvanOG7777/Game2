@@ -39,7 +39,7 @@ const levels = [
         cols: 5,
         startX: 100,
         startY: -600,
-        speedBoostScore: 1700
+        speedBoostScore: 2000
     },
     {
         wave: 5,
@@ -50,7 +50,7 @@ const levels = [
         cols: 5,
         startX: 100,
         startY: -600,
-        speedBoostScore: 2300
+        speedBoostScore: 3000
     },
     {
         wave: 6,
@@ -58,7 +58,7 @@ const levels = [
         movement: "boss",
         enemyCount: 7,
         bossHealth: 10,
-        speedBoostScore: 4000
+        speedBoostScore: 4200
     }
 ];
 
