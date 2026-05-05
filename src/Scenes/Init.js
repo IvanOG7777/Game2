@@ -13,9 +13,11 @@ class Init extends Phaser.Scene {
 
     create() {
 
-        this.my.text.initText = this.add.bitmapText(130, 400, "rocketSquare", "GALLERY SHOOTER", 40);
+        this.my.text.initText = this.add.bitmapText(130, 100, "rocketSquare", "GALLERY SHOOTER", 40);
 
-        this.add.text(220, 500, "Press SPACE to Start", {fontSize: "24px", fill: "#00fd22"});
+        this.add.text(220, 400, "Press SPACE to Start", {fontSize: "24px", fill: "#00fd22"});
+
+        this.my.text.createdBy = this.add.bitmapText(10, 575, "rocketSquare", "Created By: Ivan Argueta", 40);
 
         this.space = this.input.keyboard.addKey(
             Phaser.Input.Keyboard.KeyCodes.SPACE

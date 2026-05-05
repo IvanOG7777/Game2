@@ -22,18 +22,23 @@ class GalleryShooter extends Phaser.Scene {
         this.my = {sprite: {}, text: {}};
 
         this.my.sprite.bullet = [];
-        this.maxBullets = 6;
+        this.maxBullets = 100;
         this.playerScore = 0;
         this.playerHealth = 10;
+        this.gameWon = false;
         this.hitDelay = 3000;
         this.lastHit = 0;
 
+        this.infiniteMode = false;
+
         this.enemyBullets = [];
         this.enemyShootTimer = 0;
-        this.bossShootDelay = 3000;
-        this.enemyShootDelay = 4500;
+        this.bossShootTimer = 0;
+        this.bossShootDelay = 800;
+        this.enemyShootDelay = 3500;
         this.enemyBulletSpeed = 300;
         this.bossDead = false;
+        this.gameEnd = false;
 
         this.currentWave = 1;
         this.enemies = [];
@@ -58,8 +63,8 @@ class GalleryShooter extends Phaser.Scene {
         this.playerAlive = true;
 
         this.enemyDirection = 1;
-        this.enemySpeed = 150;
-        this.enemyDropAmount = 15;
+        this.enemySpeed = 200;
+        this.enemyDropAmount = 20;
     }
 
     preload() {
@@ -97,7 +102,7 @@ class GalleryShooter extends Phaser.Scene {
 
         let my = this.my;
 
-        // Assets
+        // Assets for spaceship
         my.sprite.spaceShip = this.add.sprite(this.cockpitX, this.cockpitY, "spaceParts", "cockpitRed_4.png");
         let rightWing = my.sprite.rightWing = this.add.sprite(this.wingRightX, this.wingRightY, "spaceParts", "wingRed_4.png");
         let leftWing = my.sprite.leftWing = this.add.sprite(this.wingLeftX, this.wingLeftY, "spaceParts", "wingRed_4.png");
@@ -174,7 +179,6 @@ class GalleryShooter extends Phaser.Scene {
             repeat: 10,
             hideOnComplete: true
         });
-
     }
 
     resetGameStateVariables() {
@@ -216,7 +220,7 @@ class GalleryShooter extends Phaser.Scene {
     }
 
     checkPlayerStatus(playerStatus) {
-        if (this.playerAlive == false) {
+        if ((this.playerAlive == true && this.currentWave > levels.length && this.gameWon == true) || this.playerAlive == false) {
             if (!this.resetText) {
                 this.resetText = this.add.text(
                     this.game.config.width / 2, 600, "RESET BY PRESSING R", {
@@ -240,7 +244,7 @@ class GalleryShooter extends Phaser.Scene {
     }
 
     update(time, deltaTime) {
-        if (this.playerAlive == true) {
+        if (this.playerAlive == true || this.gameEnd == false) {
             let my = this.my;
 
             // Grab by reference
@@ -289,7 +293,6 @@ class GalleryShooter extends Phaser.Scene {
             for (let bullet of my.sprite.bullet) {
                 if (bullet.y <= 0) {
                     bullet.destroy();
-                    console.log("Bullet went off map at: ", bullet.y);
                     bullet.isDead = true;
                     continue;
                 }
@@ -337,19 +340,6 @@ class GalleryShooter extends Phaser.Scene {
         }
 
         this.checkPlayerStatus(this.playerAlive);
-
-        if (this.playerAlive == true && this.enemies.length == 0) {
-
-            if (!this.resetText) {
-                this.resetText = this.add.text(
-                    this.game.config.width / 2, 600, "RESET BY PRESSING R", {
-                        fontSize: "48px",
-                        fill: "#00fd22"
-                    }).setOrigin(0.5);
-            }
-
-            this.reset();
-        }
     }
 }
 

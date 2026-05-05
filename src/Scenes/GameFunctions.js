@@ -134,13 +134,20 @@ function checkWave(scene) {
     let nextWave = scene.currentWave + 1; // get next wave
 
     if (nextWave > levels.length) { // check if greater then level count
-        return;
+        scene.gameWon = true;
     }
 
-    let nextLevel = levels[nextWave - 1]; // get next level
+    if (scene.gameWon == false) {
 
-    if (scene.playerScore >= nextLevel.scoreNeeded) { // check player score
-        startWave(scene, nextWave); // add next level
+        let nextLevel = levels[nextWave - 1]; // get next level
+
+        if (scene.playerScore >= nextLevel.scoreNeeded) { // check player score
+            startWave(scene, nextWave); // add next level
+        }
+    } else {
+        scene.gameEnd = true;
+        console.log("YOUWIN!!!!");
+        scene.checkPlayerStatus(scene.playerAlive);
     }
 }
 
@@ -260,37 +267,45 @@ function updatePathEnemies(scene, deltaTime) {
 
 function enemyShoot(scene, deltaTime) {
     scene.enemyShootTimer += deltaTime; // calculate timer for next shots
+    scene.bossShootTimer += deltaTime;
     
     let playSound = false; // flag to allow for only one play sound instead of many
 
     // while timer is still less then delay keep returning
-    if (scene.enemyShootTimer < scene.enemyShootDelay) {
-        return;
-    }
+    if (scene.enemyShootTimer >= scene.enemyShootDelay) {
+        // loop through enemies
+        for (let enemy of scene.enemies) {
+            if (enemy.canShoot == true && enemy.active) {
+                let bullet = scene.add.sprite(enemy.x, enemy.y + 20, "spaceParts", "laserBlue01.png");
+                bullet.setFlipY(true);
+                scene.enemyBullets.push(bullet);
 
-    // loop through enemies
-    for (let enemy of scene.enemies) {
-
-        if (enemy.isBoss) {
-            let bullet = scene.add.sprite(enemy.x, enemy.y + 20, "spaceParts", "laserBlue01.png");
-            bullet.isBossBullet = true;
-            bullet.setFlipY(true);
-            scene.enemyBullets.push(bullet);
-        }
-
-        if (enemy.canShoot == true && enemy.active) {
-            let bullet = scene.add.sprite(enemy.x, enemy.y + 20, "spaceParts", "laserBlue01.png");
-            bullet.setFlipY(true);
-            scene.enemyBullets.push(bullet);
-
-            if (!playSound) {
-                scene.my.sounds.enemyLaser.play();
-                playSound = true;
+                if (!playSound) {
+                    scene.my.sounds.enemyLaser.play();
+                    playSound = true;
+                }
             }
         }
+        scene.enemyShootTimer = 0;
     }
 
-    scene.enemyShootTimer = 0;
+    if (scene.bossShootTimer >= scene.bossShootDelay) {
+        for (let enemy of scene.enemies) {
+
+            if (enemy.isBoss) {
+                let bullet = scene.add.sprite(enemy.x, enemy.y + 20, "spaceParts", "laserBlue01.png");
+                bullet.isBossBullet = true;
+                bullet.setFlipY(true);
+                scene.enemyBullets.push(bullet);
+
+                if (!playSound) {
+                    scene.my.sounds.enemyLaser.play();
+                    playSound = true;
+                }
+            }
+        }
+        scene.bossShootTimer = 0;
+    }
 }
 
 function enemyOnPlayerCollision(scene) {
